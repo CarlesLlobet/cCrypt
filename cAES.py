@@ -17,7 +17,7 @@ def AddRoundKey(blockPT, blockKey):
 def SubBytes(byte):
 #Treure V(x) del byte, y multiplicaro per la matriu i sumarli el vector de la pag 16
 	print "SubBytes\n========="
-	
+
 
 def ShiftRows(block):
 	print "ShiftRows\n========="
@@ -27,11 +27,26 @@ def ShiftRows(block):
 
 def MixColumns(block):
 	print "MixColumns\n========="
-	mixedBlock = []
-	for byte in block:
-		mixedByte = ((byte<<1) & 0xFF) ^ ((byte>>7) * 0x1B)
-		mixedBlock.append(mixedByte)
+	#TODO: Pillar cada columna del block be
+	mixedBlock = {4}
+	for column in block
+		a = {4}
+		b = {4}
+		mixedColumn = {4}
+		# Omplir les matrius a i b amb els bytes originals y tractats respectivament
+		for i in range(0,3)
+			a[i] = column[i]
+			b[i] = ((column[i]<<1) & 0xFF) ^ ((column[i]>>7) * 0x1B)
+		
+		#Omplir la columna amb els bytes que toca per cada posició (A, 2A o 3A)
+		mixedColumn.append(b[0] ^ (b[1] ^ a[1]) ^ a[2] ^ a[3])
+		mixedColumn.append(a[0] ^ b[1] ^ (b[2] ^ a[2]) ^ a[3])
+		mixedColumn.append(a[0] ^ a[1] ^ b[2] ^ (b[3] ^ a[3]))
+		mixedColumn.append((b[0] ^ a[0]) ^ a[1] ^ a[2] ^ b[3])
 
+		mixedBlock.append(mixedColumn)
+
+ 
 def InvSubBytes():
 	print "SubBytes\n========="
 
