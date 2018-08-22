@@ -27,8 +27,8 @@ def ShiftRows(block):
 
 def MixColumns(block):
 	print "MixColumns\n========="
-	#TODO: Pillar cada columna del block be
 	mixedBlock = {4}
+	
 	for column in block
 		a = {4}
 		b = {4}
