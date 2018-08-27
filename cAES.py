@@ -51,17 +51,17 @@ def subBytes(byte):
   	g2 = 0
   	j = gfDegree(byte) - 8
 
-	while (byte != 1) :
-    	if (j < 0) :
-      		byte, v = v, byte
+	while (byte != 1):
+		if (j < 0):
+			byte, v = v, byte
       		g1, g2 = g2, g1
-  			j = -j
+			j = -j
 
 			byte ^= v << j
 			g1 ^= g2 << j
 
 		byte %= 256  # Emulating 8-bit overflow
-    	g1 %= 256 # Emulating 8-bit overflow
+		g1 %= 256 # Emulating 8-bit overflow
 
 		j = gfDegree(byte) - gfDegree(v)
 
@@ -109,7 +109,41 @@ def mixColumns(block):
 
 		mixedBlock.append(mixedColumn)
 
- 
+def rotate(byte):
+	a = byte[0]
+	for i in range(3)
+		byte[i] = byte[i+1]
+	byte[3] = a
+	return byte
+
+def rcon(byte):	
+	c = 1
+	if byte == 0:
+		return 0
+	while byte != 1:
+		c = (c * 2) & 0xFF
+		byte--
+	return c
+
+
+def keyExpansion(keylength):
+	resultKey = []
+	if keyLength = 128:
+		# White
+		resultKey += keyAes128
+		for i in range(1,10):
+			# Green
+			t =  resultKey[i*16-4]+resultKey[i*16-3]+resultKey[i*16-2]+resultKey[i*16-1]
+			rotate(t)
+			for a in range(0,3):
+				t[a] = subBytes(t[a])
+			t[0] ^= rcon(i)
+			# Red
+			resultKey ^= resultKey[((i+1)*16)-16]
+	if keyLength == 192:
+
+	if keyLength == 256:
+
 def invSubBytes(byte):
 	print "Inv Sub Bytes\n========="
 
@@ -147,21 +181,26 @@ def checkSBOX():
 	pos = 0
 	for posByte in range(0x00, 0xFF):
 		if SBox[pos] != subBytes(posByte):
+			print "Esperat: " + str(SBox[pos]) +  "\n Calculat: " + str(subBytes(posByte)) + "\n"
 			return FALSE
 		pos+=1
 	return TRUE
 
 ### MAIN ###
 args = sys.argv[1:]
-keyLenght = int(args[0])
 
-if len(args) != 2:
-	print "ERROR: 2 arguments required"
+if str(args[0]) == "-h" or str(args[0]) == "--help":
 	printUsage()
-elif 128 != keyLenght and 192 != keyLenght and 256 != keyLenght:
-	print "ERROR: First argument must be a valid keyLenght"
-	printUsage(
-)
+else:
+	keyLenght = int(args[0])
 
-if (checkSBOX()) print "SBOX correcta"
-else print "SBOX incorrecta"
+	if len(args) != 2:
+		print "ERROR: 2 arguments required"
+		printUsage()
+	elif 128 != keyLenght and 192 != keyLenght and 256 != keyLenght:
+		print "ERROR: First argument must be a valid keyLenght"
+		printUsage()
+	)
+
+	if (checkSBOX()) print "SBOX correcta"
+	else print "SBOX incorrecta"
