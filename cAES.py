@@ -17,35 +17,42 @@ expectedOutputAes128 = [0x69,0xc4,0xe0,0xd8,0x6a,0x7b,0x04,0x30,0xd8,0xcd,0xb7,0
 expectedOutputAes192 = [0xdd,0xa9,0x7c,0xa4,0x86,0x4c,0xdf,0xe0,0x6e,0xaf,0x70,0xa0,0xec,0x0d,0x71,0x91]
 expectedOutputAes256 = [0x8e,0xa2,0xb7,0xca,0x51,0x67,0x45,0xbf,0xea,0xfc,0x49,0x90,0x4b,0x49,0x60,0x89]
 
+
 def printUsage():
-	print "Usage: pythong cAES.py [128/192/256] [plaintext]"
+	print "Usage: \n'python cAES.py [-h/--help]' to print this Usage\n'python cAES.py [128/192/256]' to cipher and decipher test plaintext"
 	exit()
+
 
 def addRoundKey(blockPT, blockKey):
 #Bitwise XOR between the state matrix (key) and the round subkey
 	print "Add Round Key\n========="
 	return blockPT^blockKey
 
+
 def gfDegree(a) :
-  res = 0
-  a >>= 1
-  while (a != 0) :
-    a >>= 1;
-    res += 1;
-  return res
+	res = 0
+	a >>= 1
+	while (a != 0) :
+ 		a >>= 1;
+		res += 1;
+	return res
+
 
 def multiply(v, G):
-    result = []
-    for i in range(len(G[0])): #this loops through columns of the matrix
-        total = 0
-        for j in range(len(v)): #this loops through vector coordinates & rows of matrix
-            total += v[j] * G[j][i]
-        result.append(total)
-    return result
+	result = []
+	for i in range(len(G[0])): #this loops through columns of the matrix
+		total = 0
+		for j in range(len(v)): #this loops through vector coordinates & rows of matrix
+			total += int(v[j]) * int(G[j][i])
+		result.append(total)
+	return result
+
 
 def subBytes(byte):
 	#Treure V(x) del byte, y multiplicaro per la matriu i sumarli el vector de la pag 16
 	print "Sub Bytes\n========="
+	if (byte == 0x00):
+		return 0x63
 	v = 0x1B
   	g1 = 1
   	g2 = 0
@@ -53,12 +60,12 @@ def subBytes(byte):
 
 	while (byte != 1):
 		if (j < 0):
-			byte, v = v, byte
-      		g1, g2 = g2, g1
-			j = -j
+		  byte, v = v, byte
+		  g1, g2 = g2, g1
+		  j = -j
 
-			byte ^= v << j
-			g1 ^= g2 << j
+		byte ^= v << j
+		g1 ^= g2 << j
 
 		byte %= 256  # Emulating 8-bit overflow
 		g1 %= 256 # Emulating 8-bit overflow
@@ -77,9 +84,16 @@ def subBytes(byte):
 
 	y = [1,1,0,0,0,1,1,0]
 
-	aux = multiply(g1, m)
-	res = aux + y
+	bitArray = bin(g1).lstrip('0b').zfill(8)
+
+	aux = multiply(bitArray, m)
+	res = []
+	for i in range(8):
+		res.append(aux[7-i] ^ y[i])
+	res = list(reversed(res))
+	res = int(''.join(str(e) for e in res), 2)
   	return res
+
 
 def shiftRows(block):
 	print "Shift Rows\n========="
@@ -88,20 +102,30 @@ def shiftRows(block):
 			[block[2][2],block[2][3],block[2][0],block[2][1]],
 			[block[3][3],block[3][0],block[3][1],block[3][2]]]
 
+
+def transposeMatrix(m):
+	a = [[]]
+	for i in range(len(m)):
+		for j in range(len(m[0])):
+			a[i][j] = m[j][i]
+
+	return a
+
+
 def mixColumns(block):
 	print "Mix Columns\n========="
 	mixedBlock = {4}
-	#TODO: Pillar cada columna del block be
-	for column in block
+	#Pillem cada columna (amb zip fem la transposada per no pillar files)
+	for column in transposeMatrix(block):
 		a = {4}
 		b = {4}
 		mixedColumn = {4}
 		# Omplir les matrius a i b amb els bytes originals y tractats respectivament
-		for i in range(0,3)
+		for i in range(4):
 			a[i] = column[i]
 			b[i] = ((column[i]<<1) & 0xFF) ^ ((column[i]>>7) * 0x1B)
 		
-		#Omplir la columna amb els bytes que toca per cada posició (A, 2A o 3A)
+		#Omplir la columna amb els bytes que toca per cada posicio (A, 2A o 3A)
 		mixedColumn.append(b[0] ^ (b[1] ^ a[1]) ^ a[2] ^ a[3])
 		mixedColumn.append(a[0] ^ b[1] ^ (b[2] ^ a[2]) ^ a[3])
 		mixedColumn.append(a[0] ^ a[1] ^ b[2] ^ (b[3] ^ a[3]))
@@ -109,12 +133,14 @@ def mixColumns(block):
 
 		mixedBlock.append(mixedColumn)
 
+
 def rotate(byte):
 	a = byte[0]
-	for i in range(3)
+	for i in range(3):
 		byte[i] = byte[i+1]
 	byte[3] = a
 	return byte
+
 
 def rcon(byte):	
 	c = 1
@@ -122,13 +148,13 @@ def rcon(byte):
 		return 0
 	while byte != 1:
 		c = (c * 2) & 0xFF
-		byte--
+		byte -= 1
 	return c
 
 
-def keyExpansion(keylength):
+def keyExpansion(keyLength):
 	resultKey = []
-	if keyLength = 128:
+	if keyLength == 128:
 		# White
 		resultKey += keyAes128
 		for i in range(1,10):
@@ -141,17 +167,21 @@ def keyExpansion(keylength):
 			# Red
 			resultKey ^= resultKey[((i+1)*16)-16]
 	if keyLength == 192:
-
+		print "192"
 	if keyLength == 256:
+		print "256"
 
 def invSubBytes(byte):
 	print "Inv Sub Bytes\n========="
 
+
 def invShiftRows(block):
 	print "Inv Shift Rows\n========="
 
+
 def invMixColumns(block):
 	print "Inv Mix Columns\n========="
+
 
 def cipher():
 	"Initial AddRoundKey"
@@ -167,6 +197,7 @@ def cipher():
 	shiftRows()
 	addRoundKey()
 
+
 def decipher():
 	addRoundKey()
 	invShiftRows()
@@ -177,30 +208,38 @@ def decipher():
 		invShiftRows()
 		invSubBytes()
 
+
 def checkSBOX():
+	print "Checking SBox..."
 	pos = 0
 	for posByte in range(0x00, 0xFF):
-		if SBox[pos] != subBytes(posByte):
-			print "Esperat: " + str(SBox[pos]) +  "\n Calculat: " + str(subBytes(posByte)) + "\n"
-			return FALSE
+		print "Checking if byte " + str(hex(posByte)) + " corresponds to " + str(hex(sBox[pos]))
+		calc = subBytes(posByte)
+		if sBox[pos] != calc:
+			print "Esperat: " + str(hex(sBox[pos])) +  "\nCalculat: " + str(hex(calc)) + "\n"
+			return False
+		print "Esperat: " + str(hex(sBox[pos])) + "\nCalculat: " + str(hex(calc)) + "\n"
 		pos+=1
-	return TRUE
+	return True
+
 
 ### MAIN ###
 args = sys.argv[1:]
 
-if str(args[0]) == "-h" or str(args[0]) == "--help":
+if len(args) != 1:
+	print "ERROR: 1 argument required"
 	printUsage()
 else:
-	keyLenght = int(args[0])
-
-	if len(args) != 2:
-		print "ERROR: 2 arguments required"
+	if str(args[0]) == "-h" or str(args[0]) == "--help":
 		printUsage()
-	elif 128 != keyLenght and 192 != keyLenght and 256 != keyLenght:
-		print "ERROR: First argument must be a valid keyLenght"
-		printUsage()
-	)
-
-	if (checkSBOX()) print "SBOX correcta"
-	else print "SBOX incorrecta"
+	else:
+		keyLenght = int(args[0])
+		if 128 != keyLenght and 192 != keyLenght and 256 != keyLenght:
+			print "ERROR: First argument must be a valid keyLenght or -h/--help"
+			printUsage()
+		else:
+			print "Arguments correctly provided, going to check SBOX generation"
+			if(checkSBOX()): 
+				print "SBOX correcta"
+			else: 
+				print "SBOX incorrecta"
