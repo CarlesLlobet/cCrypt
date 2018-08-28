@@ -43,7 +43,7 @@ def multiply(v, G):
 	for i in range(len(G[0])): #this loops through columns of the matrix
 		total = 0
 		for j in range(len(v)): #this loops through vector coordinates & rows of matrix
-			total += int(v[j]) * int(G[j][i])
+			total ^= int(v[j]) & int(G[j][i])
 		result.append(total)
 	return result
 
