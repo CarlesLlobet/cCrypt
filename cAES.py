@@ -367,10 +367,10 @@ def invSubBytes(byte):
 
 def invShiftRows(block):
     print "Inv Shift Rows\n========="
-    return [[block[0][0], block[3][1], block[2][2], block[1][3]],
-            [block[1][0], block[1][1], block[3][2], block[2][3]],
-            [block[2][0], block[2][1], block[0][2], block[3][3]],
-            [block[3][0], block[0][1], block[1][2], block[0][3]]]
+    return [[block[0][0], block[0][1], block[0][2], block[0][3]],
+            [block[1][3], block[1][0], block[1][1], block[1][2]],
+            [block[2][2], block[2][3], block[2][0], block[2][1]],
+            [block[3][1], block[3][2], block[3][3], block[3][0]]]
 
 
 def invMixColumns(block):
@@ -391,7 +391,7 @@ def invMixColumns(block):
             c[i] = ((b[i] << 1) & 0xFF) ^ ((b[i] >> 7) * 0x1B)           #x4
             d[i] = ((c[i] << 1) & 0xFF) ^ ((c[i] >> 7) * 0x1B)           #x8
 
-        # Omplir la columna amb els bytes que toca per cada posicio (A, 2A o 3A)
+        # Omplir la columna amb els bytes que toca per cada posicio (9A, 11A, 13A o 14A)
         mixedColumn[0] = ((d[0] ^ c[0] ^ b[0]) ^ (d[1] ^ b[1] ^ a[1]) ^ (d[2] ^ c[2] ^ a[2]) ^ (d[3] ^ a[3]))
         mixedColumn[1] = ((d[0] ^ a[0]) ^ (d[1] ^ c[1] ^ b[1]) ^ (d[2] ^ b[2] ^ a[2]) ^ (d[3] ^ c[3] ^ a[3]))
         mixedColumn[2] = ((d[0] ^ c[0] ^ a[0]) ^ (d[1] ^ a[1]) ^ (d[2] ^ c[2] ^ b[2]) ^ (d[3] ^ b[3] ^ a[3]))
@@ -464,7 +464,7 @@ def decipher(key, keyLength):
     decipheredText = invShiftRows(decipheredText)
     for i in range(4):
         for j in range(4):
-            print str(hex(decipheredText[i][j]))
+            print str(hex(decipheredText[i][j]))     #Aqui ja no esta be
     print "InvSub Bytes\n========="
     for i in range(4):
         for j in range(4):
@@ -477,7 +477,7 @@ def decipher(key, keyLength):
         decipheredText = addRoundKey(decipheredText, key[(nRounds.get(keyLength)*16) - (16 * a):(nRounds.get(keyLength)*16) - (16 * (a-1))])
         for i in range(4):
             for j in range(4):
-                print str(hex(decipheredText[i][j])) # Fins aqui esta be
+                print str(hex(decipheredText[i][j]))
         decipheredText = invMixColumns(decipheredText)
         for i in range(4):
             for j in range(4):
@@ -572,11 +572,11 @@ else:
                 # else:
                 #     print "KeyExpansion incorrecta"
 
-                cipheredText = cipher(keyExpanded, 128)
-                print "Ciphered Text is: "
-                for i in range(4):
-                    for j in range(4):
-                        print str(hex(cipheredText[i][j]))
+                # cipheredText = cipher(keyExpanded, 128)
+                # print "Ciphered Text is: "
+                # for i in range(4):
+                #     for j in range(4):
+                #         print str(hex(cipheredText[i][j]))
                 decipheredText = decipher(keyExpanded, 128)
                 print "Deciphered Text is: "
                 for i in range(4):
@@ -588,11 +588,11 @@ else:
                 # 	print "KeyExpansion correcta"
                 # else:
                 # 	print "KeyExpansion incorrecta"
-                cipheredText = cipher(keyExpanded, 192)
-                print "Ciphered Text is: "
-                for i in range(4):
-                    for j in range(4):
-                        print str(hex(cipheredText[i][j]))
+                # cipheredText = cipher(keyExpanded, 192)
+                # print "Ciphered Text is: "
+                # for i in range(4):
+                #     for j in range(4):
+                #         print str(hex(cipheredText[i][j]))
                 decipheredText = decipher(keyExpanded, 192)
                 print "Deciphered Text is: "
                 for i in range(4):
@@ -604,11 +604,11 @@ else:
                 # 	print "KeyExpansion correcta"
                 # else:
                 # 	print "KeyExpansion incorrecta"
-                cipheredText = cipher(keyExpanded, 256)
-                print "Ciphered Text is: "
-                for i in range(4):
-                    for j in range(4):
-                        print str(hex(cipheredText[i][j]))
+                # cipheredText = cipher(keyExpanded, 256)
+                # print "Ciphered Text is: "
+                # for i in range(4):
+                #     for j in range(4):
+                #         print str(hex(cipheredText[i][j]))
                 decipheredText = decipher(keyExpanded, 256)
                 print "Deciphered Text is: "
                 for i in range(4):
