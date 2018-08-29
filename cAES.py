@@ -320,7 +320,6 @@ def keyExpansion(keyLength):
 
 
 def invSubBytes(byte):
-    print "Inv Sub Bytes\n========="
     # Multiplicaro per la matriu i sumarli el vector de la pag 32 y dspres reure V(x) del byte fent la inversa
     if (byte == 0x63):
         return 0x00
@@ -368,17 +367,17 @@ def invSubBytes(byte):
 
 def invShiftRows(block):
     print "Inv Shift Rows\n========="
-    return [[block[0][0], block[3][0], block[2][0], block[1][0]],
-            [block[1][1], block[0][1], block[3][1], block[2][1]],
-            [block[2][2], block[1][2], block[0][2], block[3][2]],
-            [block[3][3], block[2][3], block[1][3], block[0][3]]]
+    return [[block[0][0], block[3][1], block[2][2], block[1][3]],
+            [block[1][0], block[1][1], block[3][2], block[2][3]],
+            [block[2][0], block[2][1], block[0][2], block[3][3]],
+            [block[3][0], block[0][1], block[1][2], block[0][3]]]
 
 
 def invMixColumns(block):
     print "Inv Mix Columns\n========="
     mixedBlock = [None] * 4
     # Pillem cada columna (amb zip fem la transposada per no pillar files)
-    c = 0
+    e = 0
     for column in transposeMatrix(block):
         a = [None] * 4
         b = [None] * 4
@@ -398,8 +397,8 @@ def invMixColumns(block):
         mixedColumn[2] = ((d[0] ^ c[0] ^ a[0]) ^ (d[1] ^ a[1]) ^ (d[2] ^ c[2] ^ b[2]) ^ (d[3] ^ b[3] ^ a[3]))
         mixedColumn[3] = ((d[0] ^ b[0] ^ a[0]) ^ (d[1] ^ c[1] ^ a[1]) ^ (d[2] ^ a[2]) ^ (d[3] ^ c[3] ^ b[3]))
 
-        mixedBlock[c] = (mixedColumn)
-        c += 1
+        mixedBlock[e] = (mixedColumn)
+        e += 1
     return mixedBlock
 
 
@@ -433,6 +432,7 @@ def cipher(key, keyLength):
             for j in range(4):
                 print str(hex(cipheredText[i][j]))
     print "Ciphering: Last Round"
+    print "Sub Bytes\n========="
     for i in range(4):
         for j in range(4):
             cipheredText[i][j] = subBytes(cipheredText[i][j])
@@ -450,52 +450,55 @@ def cipher(key, keyLength):
 def decipher(key, keyLength):
     print "Deciphering: Initial AddRoundKey"
     if keyLength == 128:
-        cipheredText = listToMatrix(invPlainText128)
+        decipheredText = listToMatrix(invPlainText128)
     elif keyLength == 192:
-        cipheredText = listToMatrix(invPlainText192)
+        decipheredText = listToMatrix(invPlainText192)
     elif keyLength == 256:
-        cipheredText = listToMatrix(invPlainText256)
+        decipheredText = listToMatrix(invPlainText256)
 
-    cipheredText = addRoundKey(cipheredText, key[0:16])  # Li passem el first block de la key
+    decipheredText = addRoundKey(decipheredText, key[nRounds.get(keyLength) * 16:])  # Li passem el first block de la key
     for i in range(4):
         for j in range(4):
-            print str(hex(cipheredText[i][j]))
+            print str(hex(decipheredText[i][j]))
+    #decipheredText = transposeMatrix(decipheredText)  # Com no fem mixColumns, la transposem a ma
+    decipheredText = invShiftRows(decipheredText)
+    for i in range(4):
+        for j in range(4):
+            print str(hex(decipheredText[i][j]))
+    print "InvSub Bytes\n========="
+    for i in range(4):
+        for j in range(4):
+            decipheredText[i][j] = invSubBytes(decipheredText[i][j])
+    for i in range(4):
+        for j in range(4):
+            print str(hex(decipheredText[i][j]))
     for a in range(1, nRounds.get(keyLength)):
-        print "Ciphering: Loop " + str(a)
-        print "Sub Bytes\n========="
+        print "Deciphering: Loop " + str(a)
+        decipheredText = addRoundKey(decipheredText, key[(nRounds.get(keyLength)*16) - (16 * a):(nRounds.get(keyLength)*16) - (16 * (a-1))])
         for i in range(4):
             for j in range(4):
-                cipheredText[i][j] = invSubBytes(cipheredText[i][j])
+                print str(hex(decipheredText[i][j])) # Fins aqui esta be
+        decipheredText = invMixColumns(decipheredText)
         for i in range(4):
             for j in range(4):
-                print str(hex(cipheredText[i][j]))
-        cipheredText = invShiftRows(cipheredText)
+                print str(hex(decipheredText[i][j]))
+        decipheredText = invShiftRows(decipheredText)
         for i in range(4):
             for j in range(4):
-                print str(hex(cipheredText[i][j]))
-        cipheredText = invMixColumns(cipheredText)
+                print str(hex(decipheredText[i][j]))
+        print "InvSub Bytes\n========="
         for i in range(4):
             for j in range(4):
-                print str(hex(cipheredText[i][j]))
-        # r = slice(i*16,i*16+16)
-        cipheredText = addRoundKey(cipheredText, key[16 * a:(16 * a) + 16])
+                decipheredText[i][j] = invSubBytes(decipheredText[i][j])
         for i in range(4):
             for j in range(4):
-                print str(hex(cipheredText[i][j]))
-    print "Ciphering: Last Round"
+                print str(hex(decipheredText[i][j]))
+    print "Deciphering: Last Round"
     for i in range(4):
         for j in range(4):
-            cipheredText[i][j] = invSubBytes(cipheredText[i][j])
-    for i in range(4):
-        for j in range(4):
-            print str(hex(cipheredText[i][j]))  # Fins aqui esta be
-    cipheredText = invShiftRows(cipheredText)
-    cipheredText = transposeMatrix(cipheredText)  # Com no fem mixColumns, la transposem a ma
-    for i in range(4):
-        for j in range(4):
-            print str(hex(cipheredText[i][j]))
-    cipheredText = addRoundKey(cipheredText, key[nRounds.get(keyLength) * 16:])
-    return cipheredText
+            print str(hex(decipheredText[i][j]))
+    decipheredText = addRoundKey(decipheredText, key[0:16])
+    return decipheredText
 
 
 def checkSBOX():
@@ -574,7 +577,11 @@ else:
                 for i in range(4):
                     for j in range(4):
                         print str(hex(cipheredText[i][j]))
-
+                decipheredText = decipher(keyExpanded, 128)
+                print "Deciphered Text is: "
+                for i in range(4):
+                    for j in range(4):
+                        print str(hex(decipheredText[i][j]))
             elif keyLength == 192:
                 keyExpanded = keyExpansion(192)
                 # if (checkKeyExpanded(keyExpanded, keyAes192expanded)):
@@ -586,6 +593,11 @@ else:
                 for i in range(4):
                     for j in range(4):
                         print str(hex(cipheredText[i][j]))
+                decipheredText = decipher(keyExpanded, 192)
+                print "Deciphered Text is: "
+                for i in range(4):
+                    for j in range(4):
+                        print str(hex(decipheredText[i][j]))
             elif keyLength == 256:
                 keyExpanded = keyExpansion(256)
                 # if (checkKeyExpanded(keyExpanded, keyAes256expanded)):
@@ -597,3 +609,8 @@ else:
                 for i in range(4):
                     for j in range(4):
                         print str(hex(cipheredText[i][j]))
+                decipheredText = decipher(keyExpanded, 256)
+                print "Deciphered Text is: "
+                for i in range(4):
+                    for j in range(4):
+                        print str(hex(decipheredText[i][j]))
