@@ -1,4 +1,4 @@
-#!/usr/bin/env python
+    #!/usr/bin/env python
 import sys
 from __builtin__ import bytearray
 
@@ -378,7 +378,7 @@ def invMixColumns(block):
     mixedBlock = [None] * 4
     # Pillem cada columna (amb zip fem la transposada per no pillar files)
     e = 0
-    for column in transposeMatrix(block):
+    for column in block:
         a = [None] * 4
         b = [None] * 4
         c = [None] * 4
@@ -460,11 +460,12 @@ def decipher(key, keyLength):
     for i in range(4):
         for j in range(4):
             print str(hex(decipheredText[i][j]))
-    #decipheredText = transposeMatrix(decipheredText)  # Com no fem mixColumns, la transposem a ma
+    decipheredText = transposeMatrix(decipheredText)  # Com no fem mixColumns, la transposem a ma
     decipheredText = invShiftRows(decipheredText)
+    decipheredText = transposeMatrix(decipheredText)  # Com no fem mixColumns, la transposem a ma
     for i in range(4):
         for j in range(4):
-            print str(hex(decipheredText[i][j]))     #Aqui ja no esta be
+            print str(hex(decipheredText[i][j]))
     print "InvSub Bytes\n========="
     for i in range(4):
         for j in range(4):
@@ -482,7 +483,9 @@ def decipher(key, keyLength):
         for i in range(4):
             for j in range(4):
                 print str(hex(decipheredText[i][j]))
+        decipheredText = transposeMatrix(decipheredText)  # Com no fem mixColumns, la transposem a ma
         decipheredText = invShiftRows(decipheredText)
+        decipheredText = transposeMatrix(decipheredText)  # Com no fem mixColumns, la transposem a ma
         for i in range(4):
             for j in range(4):
                 print str(hex(decipheredText[i][j]))
