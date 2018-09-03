@@ -1,4 +1,4 @@
-    #!/usr/bin/env python
+#!/usr/bin/env python
 import sys
 from __builtin__ import bytearray
 
@@ -464,12 +464,13 @@ def cipher(key, keyLength):
                 cipheredText[i][j] = cipheredText[i][j] ^ maskY[i * 4 + j]
                 maskXY.append(maskX[i * 4 + j] ^ maskY[i * 4 + j])
         invMaskY = []
+        maskX1 = [[None]*4]*4
         for i in range(4):
             for j in range(4):
                 cipheredText[i][j] = cipheredText[i][j] ^ maskXY[i * 4 + j]
                 cipheredText[i][j] = subBytes(cipheredText[i][j])
                 invMaskY.append(subBytes(maskY[i*4+j]))
-                maskX1 = subBytesMask(maskX[i*4+j])
+                maskX1[i][j] = subBytesMask(maskX[i*4+j])
         for i in range(4):
             for j in range(4):
                 aux = maskX[i*4+j] ^ invMaskY[i*4+j]
@@ -478,22 +479,30 @@ def cipher(key, keyLength):
         for i in range(4):
             for j in range(4):
                 print str(hex(cipheredText[i][j]))
-        cipheredText = cipheredText ^ maskX1
+        for i in range(4):
+            for i in range(4):
+                cipheredText[i][j] = cipheredText[i][j] ^ maskX1[i][j]
         cipheredText = shiftRows(cipheredText)
         maskX2 = shiftRows(maskX1)
         for i in range(4):
             for j in range(4):
                 print str(hex(cipheredText[i][j]))
-        cipheredText = cipheredText ^ maskX2
+        for i in range(4):
+            for i in range(4):
+                cipheredText[i][j] = cipheredText[i][j] ^ maskX2[i][j]
         cipheredText = mixColumns(cipheredText)
         maskX3 = mixColumns(maskX2)
         for i in range(4):
             for j in range(4):
                 print str(hex(cipheredText[i][j]))
         #r = slice(i*16,i*16+16)
-        cipheredText = cipheredText ^ maskX3
+        for i in range(4):
+            for i in range(4):
+                cipheredText[i][j] = cipheredText[i][j] ^ maskX3[i][j]
         cipheredText = addRoundKey(cipheredText, key[16*a:(16*a)+16])
-        cipheredText = cipheredText ^ maskX3
+        for i in range(4):
+            for i in range(4):
+                cipheredText[i][j] = cipheredText[i][j] ^ maskX3[i][j]
         for i in range(4):
             for j in range(4):
                 print str(hex(cipheredText[i][j]))
