@@ -93,6 +93,8 @@ expectedOutputAes128 = [0x69, 0xc4, 0xe0, 0xd8, 0x6a, 0x7b, 0x04, 0x30, 0xd8, 0x
 expectedOutputAes192 = [0xdd, 0xa9, 0x7c, 0xa4, 0x86, 0x4c, 0xdf, 0xe0, 0x6e, 0xaf, 0x70, 0xa0, 0xec, 0x0d, 0x71, 0x91]
 expectedOutputAes256 = [0x8e, 0xa2, 0xb7, 0xca, 0x51, 0x67, 0x45, 0xbf, 0xea, 0xfc, 0x49, 0x90, 0x4b, 0x49, 0x60, 0x89]
 
+maskX = [0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00]
+maskY = [0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x01]
 
 def printUsage():
     print "Usage: \n'python cAES.py [-h/--help]' to print this Usage\n'python cAES.py [128/192/256]' to cipher and decipher test plaintext"
@@ -105,7 +107,7 @@ def addRoundKey(blockPT, blockKey):
     res = []
     for i in range(4):
         for j in range(4):
-            res.append(blockPT[i][j] ^ blockKey[i*4+j])
+            res.append(blockPT[i][j] ^ blockKey[i*4+j] ^ maskX[i*4+j])
     return listToMatrix(res)
 
 
@@ -132,6 +134,7 @@ def subBytes(byte):
     # Treure V(x) del byte, y multiplicaro per la matriu i sumarli el vector de la pag 16
     if (byte == 0x00):
         return 0x63
+
     v = 0x1B
     g1 = 1
     g2 = 0
@@ -170,6 +173,49 @@ def subBytes(byte):
     for i in range(8):
         res.append(aux[7 - i] ^ y[i])
     res = list(reversed(res))
+    res = int(''.join(str(e) for e in res), 2)
+    return res
+
+def subBytesMask(byte):
+    # Treure V(x) del byte, y multiplicaro per la matriu i sumarli el vector de la pag 16
+    if (byte == 0x00):
+        return 0x63
+
+    v = 0x1B
+    g1 = 1
+    g2 = 0
+    j = gfDegree(byte) - 8
+
+    while (byte != 1):
+        if (j < 0):
+            byte, v = v, byte
+            g1, g2 = g2, g1
+            j = -j
+
+        byte ^= v << j
+        g1 ^= g2 << j
+
+        byte %= 256  # Emulating 8-bit overflow
+        g1 %= 256  # Emulating 8-bit overflow
+
+        j = gfDegree(byte) - gfDegree(v)
+
+    # Ara a g1 tenim la inversa multiplicativa V(x)
+    m = [[1, 0, 0, 0, 1, 1, 1, 1],
+         [1, 1, 0, 0, 0, 1, 1, 1],
+         [1, 1, 1, 0, 0, 0, 1, 1],
+         [1, 1, 1, 1, 0, 0, 0, 1],
+         [1, 1, 1, 1, 1, 0, 0, 0],
+         [0, 1, 1, 1, 1, 1, 0, 0],
+         [0, 0, 1, 1, 1, 1, 1, 0],
+         [0, 0, 0, 1, 1, 1, 1, 1]]
+
+    y = [1, 1, 0, 0, 0, 1, 1, 0]
+
+    bitArray = bin(g1).lstrip('0b').zfill(8)
+
+    aux = multiply(bitArray, m)
+    res = list(reversed(aux))
     res = int(''.join(str(e) for e in res), 2)
     return res
 
@@ -412,22 +458,42 @@ def cipher(key, keyLength):
     for a in range(1, nRounds.get(keyLength)):
         print "Ciphering: Loop " + str(a)
         print "Sub Bytes\n========="
+        maskXY = []
         for i in range(4):
             for j in range(4):
+                cipheredText[i][j] = cipheredText[i][j] ^ maskY[i * 4 + j]
+                maskXY.append(maskX[i * 4 + j] ^ maskY[i * 4 + j])
+        invMaskY = []
+        for i in range(4):
+            for j in range(4):
+                cipheredText[i][j] = cipheredText[i][j] ^ maskXY[i * 4 + j]
                 cipheredText[i][j] = subBytes(cipheredText[i][j])
+                invMaskY.append(subBytes(maskY[i*4+j]))
+                maskX1 = subBytesMask(maskX[i*4+j])
+        for i in range(4):
+            for j in range(4):
+                aux = maskX[i*4+j] ^ invMaskY[i*4+j]
+                cipheredText[i][j] = cipheredText[i][j] ^ (aux)
+                cipheredText[i][j] = cipheredText[i][j] ^ maskY[i*4+j]
         for i in range(4):
             for j in range(4):
                 print str(hex(cipheredText[i][j]))
+        cipheredText = cipheredText ^ maskX1
         cipheredText = shiftRows(cipheredText)
+        maskX2 = shiftRows(maskX1)
         for i in range(4):
             for j in range(4):
                 print str(hex(cipheredText[i][j]))
+        cipheredText = cipheredText ^ maskX2
         cipheredText = mixColumns(cipheredText)
+        maskX3 = mixColumns(maskX2)
         for i in range(4):
             for j in range(4):
                 print str(hex(cipheredText[i][j]))
         #r = slice(i*16,i*16+16)
+        cipheredText = cipheredText ^ maskX3
         cipheredText = addRoundKey(cipheredText, key[16*a:(16*a)+16])
+        cipheredText = cipheredText ^ maskX3
         for i in range(4):
             for j in range(4):
                 print str(hex(cipheredText[i][j]))
