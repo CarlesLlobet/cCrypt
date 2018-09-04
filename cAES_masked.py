@@ -90,8 +90,10 @@ keyAes256expanded = [0x00, 0x01, 0x02, 0x03, 0x04, 0x05, 0x06, 0x07, 0x08, 0x09,
                      0x4e, 0x5a, 0x66, 0x99, 0xa9, 0xf2, 0x4f, 0xe0, 0x7e, 0x57, 0x2b, 0xaa, 0xcd, 0xf8, 0xcd, 0xea,
                      0x24, 0xfc, 0x79, 0xcc, 0xbf, 0x09, 0x79, 0xe9, 0x37, 0x1a, 0xc2, 0x3c, 0x6d, 0x68, 0xde, 0x36]
 
-maskX = [0x0f, 0x0e, 0x0d, 0x0c, 0x0b, 0x0a, 0x09, 0x08, 0x07, 0xd4, 0x05, 0x04, 0x03, 0x02, 0x01, 0x00]
-maskY = [0x01, 0x02, 0x03, 0x04, 0x05, 0x06, 0x07, 0x08, 0x09, 0x0a, 0x0b, 0x0c, 0x0d, 0x0e, 0x0f, 0x10]
+#maskX = [0x0f, 0x0e, 0x0d, 0x0c, 0x0b, 0x0a, 0x09, 0x08, 0x07, 0xd4, 0x05, 0x04, 0x03, 0x02, 0x01, 0x00]
+maskX = [0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00]
+#maskY = [0x01, 0x02, 0x03, 0x04, 0x05, 0x06, 0x07, 0x08, 0x09, 0x0a, 0x0b, 0x0c, 0x0d, 0x0e, 0x0f, 0x10]
+maskY = [0x01, 0x01, 0x01, 0x01, 0x01, 0x01, 0x01, 0x01, 0x01, 0x01, 0x01, 0x01, 0x01, 0x01, 0x01, 0x01]
 
 def printUsage():
     print "Usage: \n'python cAES.py [-h/--help]' to print this Usage\n'python cAES.py [128/192/256]' to cipher and decipher test plaintext"
@@ -532,6 +534,9 @@ def cipher(key, keyLength):
     for i in range(4):
         for j in range(4):
             cipheredText[i][j] = affineTransformation(cipheredText[i][j])
+    for i in range(4):
+        for j in range(4):
+            print str(hex(cipheredText[i][j]))
     cipheredText = shiftRows(cipheredText)
     maskX2 = transposeMatrix(maskX2)
     cipheredText = transposeMatrix(cipheredText)  # Com no fem mixColumns, la transposem a ma
@@ -579,13 +584,15 @@ def decipher(key, keyLength):
 
     for a in range(1, nRounds.get(keyLength)):
         print "Deciphering: Loop " + str(a)
-        decipheredText = transposeMatrix(decipheredText)  # Com no fem mixColumns, la transposem a ma
         decipheredText = invShiftRows(decipheredText)
         decipheredText = transposeMatrix(decipheredText)  # Com no fem mixColumns, la transposem a ma
         for i in range(4):
             for j in range(4):
                 print str(hex(decipheredText[i][j]))
         print "InvSub Bytes\n========="
+        for i in range(4):
+            for j in range(4):
+                decipheredText[i][j] = invAffineTransformation(decipheredText[i][j])
         maskXY = []
         for i in range(4):
             for j in range(4):
@@ -611,7 +618,7 @@ def decipher(key, keyLength):
                 decipheredText[i][j] = gf_mult(decipheredText[i][j], maskY[i * 4 + j])
         for i in range(4):
             for j in range(4):
-                decipheredText[i][j] = invAffineTransformation(decipheredText[i][j])
+                print str(hex(decipheredText[i][j]))
         decipheredText = addRoundKey(decipheredText, key[(nRounds.get(keyLength)*16) - (16 * a):(nRounds.get(keyLength)*16) - (16 * (a-1))])
         for i in range(4):
             for j in range(4):
@@ -622,13 +629,15 @@ def decipher(key, keyLength):
             for j in range(4):
                 print str(hex(decipheredText[i][j]))
     print "Deciphering: Last Round"
-    decipheredText = transposeMatrix(decipheredText)  # Com no fem mixColumns, la transposem a ma
     decipheredText = invShiftRows(decipheredText)
     decipheredText = transposeMatrix(decipheredText)  # Com no fem mixColumns, la transposem a ma
     for i in range(4):
         for j in range(4):
             print str(hex(decipheredText[i][j]))
     print "InvSub Bytes\n========="
+    for i in range(4):
+        for j in range(4):
+            decipheredText[i][j] = invAffineTransformation(decipheredText[i][j])
     maskXY = []
     for i in range(4):
         for j in range(4):
@@ -652,9 +661,6 @@ def decipher(key, keyLength):
     for i in range(4):
         for j in range(4):
             decipheredText[i][j] = gf_mult(decipheredText[i][j], maskY[i * 4 + j])
-    for i in range(4):
-        for j in range(4):
-            decipheredText[i][j] = invAffineTransformation(decipheredText[i][j])
 
     decipheredText = addRoundKey(decipheredText, key[0:16])
     for i in range(4):
