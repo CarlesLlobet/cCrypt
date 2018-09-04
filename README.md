@@ -1,7 +1,7 @@
-# cAES
-Own implementation of an AES engine in Python
+# cCrypt
+Own implementation of an different cryptography engines in Python
 
-This project aims to implement an AES engine in Python to analyze its behaviour, and better understand its functioning.
+This project aims to implement an AES and DES engines unmasked and masked in Python to analyze its behaviour, and better understand its functioning.
 
 ## Getting Started
 
@@ -30,4 +30,5 @@ See also the list of [contributors](https://github.com/CarlesLlobet/cAES/contrib
 
 ## Acknowledgments
 
-* Project inspired by https://github.com/ricmoo/pyaes/blob/master/pyaes
+* Project inspired by https://csrc.nist.gov/csrc/media/publications/fips/197/final/documents/fips-197.pdf
+* Project inspired by https://csrc.nist.gov/csrc/media/publications/fips/46/3/archive/1999-10-25/documents/fips46-3.pdf
