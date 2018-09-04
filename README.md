@@ -30,4 +30,4 @@ See also the list of [contributors](https://github.com/CarlesLlobet/cAES/contrib
 
 ## Acknowledgments
 
-* Project inspired by https://github.com/ricmoo/pyaes/blob/master/pyaes
+* Project inspired by http://csrc.nist.gov/publications/fips/fips197/fips-197.pdf
