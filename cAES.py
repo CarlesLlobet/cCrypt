@@ -1,4 +1,4 @@
-    #!/usr/bin/env python
+#!/usr/bin/env python
 import sys
 from __builtin__ import bytearray
 
@@ -434,7 +434,7 @@ def cipher(key, keyLength):
             cipheredText[i][j] = subBytes(cipheredText[i][j])
     for i in range(4):
         for j in range(4):
-            print str(hex(cipheredText[i][j])) #Fins aqui esta be
+            print str(hex(cipheredText[i][j]))
     cipheredText = shiftRows(cipheredText)
     cipheredText = transposeMatrix(cipheredText)  # Com no fem mixColumns, la transposem a ma
     for i in range(4):
