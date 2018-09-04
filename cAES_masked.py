@@ -353,10 +353,29 @@ def keyExpansion(keyLength):
                 c += 1
         return resultKey
 
-
-def invSubBytes(byte):
+def invSubBytesMask(byte):
     # Multiplicaro per la matriu i sumarli el vector de la pag 32 y dspres reure V(x) del byte fent la inversa
-    if (byte == 0x63):
+    if (byte == 0x00):
+        return 0x00
+
+    # Ara a g1 tenim la inversa multiplicativa V(x)
+    m = [[0, 0, 1, 0, 0, 1, 0, 1],
+         [1, 0, 0, 1, 0, 0, 1, 0],
+         [0, 1, 0, 0, 1, 0, 0, 1],
+         [1, 0, 1, 0, 0, 1, 0, 0],
+         [0, 1, 0, 1, 0, 0, 1, 0],
+         [0, 0, 1, 0, 1, 0, 0, 1],
+         [1, 0, 0, 1, 0, 1, 0, 0],
+         [0, 1, 0, 0, 1, 0, 1, 0]]
+
+    bitArray = bin(byte).lstrip('0b').zfill(8)
+
+    aux = multiply(bitArray, m)
+    res = int(''.join(str(e) for e in aux), 2)
+
+def invAffineTransformation(byte):
+    # Multiplicaro per la matriu i sumarli el vector de la pag 32
+    if (byte == 0x00):
         return 0x00
 
     # Ara a g1 tenim la inversa multiplicativa V(x)
@@ -380,32 +399,12 @@ def invSubBytes(byte):
     res = list(reversed(res))
     res = int(''.join(str(e) for e in res), 2)
 
-    v = 0x1B
-    g1 = 1
-    g2 = 0
-    j = gfDegree(res) - 8
-
-    while (res != 1):
-        if (j < 0):
-            res, v = v, res
-            g1, g2 = g2, g1
-            j = -j
-
-        res ^= v << j
-        g1 ^= g2 << j
-
-        res %= 256  # Emulating 8-bit overflow
-        g1 %= 256  # Emulating 8-bit overflow
-
-        j = gfDegree(res) - gfDegree(v)
-    return g1
-
 def invShiftRows(block):
     print "Inv Shift Rows\n========="
-    return [[block[0][0], block[0][1], block[0][2], block[0][3]],
-            [block[1][3], block[1][0], block[1][1], block[1][2]],
-            [block[2][2], block[2][3], block[2][0], block[2][1]],
-            [block[3][1], block[3][2], block[3][3], block[3][0]]]
+    return [[block[0][0], block[1][0], block[2][0], block[3][0]],
+            [block[3][1], block[0][1], block[1][1], block[2][1]],
+            [block[2][2], block[3][2], block[0][2], block[1][2]],
+            [block[1][3], block[2][3], block[3][3], block[0][3]]]
 
 
 def invMixColumns(block):
@@ -541,6 +540,20 @@ def cipher(key, keyLength):
     return listToMatrix(res)
 
 def decipher(key, keyLength):
+    print "Calculating masks"
+    print "Mask X: " + str(maskX)
+    maskX1 = mixColumns(maskX)
+    print "Mask X1" + str(maskX1)
+    maskX2 = shiftRows(maskX1)
+    print "Mask X2" + str(maskX2)
+    maskX3 = []
+    for i in range(4):
+        row = []
+        for j in range(4):
+            row.append(invSubBytesMask(maskX2[i * 4 + j]))
+        maskX3.append(row)
+    print "Mask X3" + str(maskX3)
+
     print "Deciphering: Initial AddRoundKey"
     if keyLength == 128:
         decipheredText = listToMatrix(invPlainText128)
@@ -553,6 +566,53 @@ def decipher(key, keyLength):
     for i in range(4):
         for j in range(4):
             print str(hex(decipheredText[i][j]))
+
+
+    for a in range(1, nRounds.get(keyLength)):
+        print "Deciphering: Loop " + str(a)
+        decipheredText = transposeMatrix(decipheredText)  # Com no fem mixColumns, la transposem a ma
+        decipheredText = invShiftRows(decipheredText)
+        decipheredText = transposeMatrix(decipheredText)  # Com no fem mixColumns, la transposem a ma
+        for i in range(4):
+            for j in range(4):
+                print str(hex(decipheredText[i][j]))
+        print "InvSub Bytes\n========="
+        maskXY = []
+        for i in range(4):
+            for j in range(4):
+                cipheredText[i][j] = gf_mult(cipheredText[i][j], maskY[i * 4 + j])
+                maskXY.append(gf_mult(maskX[i * 4 + j], maskY[i * 4 + j]))
+        invMaskY = []
+        for i in range(4):
+            for j in range(4):
+                cipheredText[i][j] = cipheredText[i][j] ^ maskXY[i * 4 + j]
+        for i in range(4):
+            for j in range(4):
+                cipheredText[i][j] = inverseMultiplicative(cipheredText[i][j])
+                invMaskY.append(inverseMultiplicative(maskY[i * 4 + j]))
+        aux = []
+        for i in range(4):
+            for j in range(4):
+                aux.append(gf_mult(maskX[i * 4 + j], invMaskY[i * 4 + j]))
+        for i in range(4):
+            for j in range(4):
+                cipheredText[i][j] = cipheredText[i][j] ^ (aux[i * 4 + j])
+        for i in range(4):
+            for j in range(4):
+                cipheredText[i][j] = gf_mult(cipheredText[i][j], maskY[i * 4 + j])
+        for i in range(4):
+            for j in range(4):
+                cipheredText[i][j] = invAffineTransformation(cipheredText[i][j])
+        decipheredText = addRoundKey(decipheredText, key[(nRounds.get(keyLength)*16) - (16 * a):(nRounds.get(keyLength)*16) - (16 * (a-1))])
+        for i in range(4):
+            for j in range(4):
+                decipheredText[i][j] = decipheredText[i][j] ^ maskX3[i][j]
+                print str(hex(decipheredText[i][j]))
+        decipheredText = invMixColumns(decipheredText)
+        for i in range(4):
+            for j in range(4):
+                print str(hex(decipheredText[i][j]))
+    print "Deciphering: Last Round"
     decipheredText = transposeMatrix(decipheredText)  # Com no fem mixColumns, la transposem a ma
     decipheredText = invShiftRows(decipheredText)
     decipheredText = transposeMatrix(decipheredText)  # Com no fem mixColumns, la transposem a ma
@@ -566,34 +626,13 @@ def decipher(key, keyLength):
     for i in range(4):
         for j in range(4):
             print str(hex(decipheredText[i][j]))
-    for a in range(1, nRounds.get(keyLength)):
-        print "Deciphering: Loop " + str(a)
-        decipheredText = addRoundKey(decipheredText, key[(nRounds.get(keyLength)*16) - (16 * a):(nRounds.get(keyLength)*16) - (16 * (a-1))])
-        for i in range(4):
-            for j in range(4):
-                print str(hex(decipheredText[i][j]))
-        decipheredText = invMixColumns(decipheredText)
-        for i in range(4):
-            for j in range(4):
-                print str(hex(decipheredText[i][j]))
-        decipheredText = transposeMatrix(decipheredText)  # Com no fem mixColumns, la transposem a ma
-        decipheredText = invShiftRows(decipheredText)
-        decipheredText = transposeMatrix(decipheredText)  # Com no fem mixColumns, la transposem a ma
-        for i in range(4):
-            for j in range(4):
-                print str(hex(decipheredText[i][j]))
-        print "InvSub Bytes\n========="
-        for i in range(4):
-            for j in range(4):
-                decipheredText[i][j] = invSubBytes(decipheredText[i][j])
-        for i in range(4):
-            for j in range(4):
-                print str(hex(decipheredText[i][j]))
-    print "Deciphering: Last Round"
     for i in range(4):
         for j in range(4):
             print str(hex(decipheredText[i][j]))
     decipheredText = addRoundKey(decipheredText, key[0:16])
+    for i in range(4):
+        for j in range(4):
+            decipheredText[i][j] = decipheredText[i][j] ^ maskX2[i][j]
     return decipheredText
 
 
