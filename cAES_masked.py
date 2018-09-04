@@ -90,8 +90,7 @@ keyAes256expanded = [0x00, 0x01, 0x02, 0x03, 0x04, 0x05, 0x06, 0x07, 0x08, 0x09,
                      0x4e, 0x5a, 0x66, 0x99, 0xa9, 0xf2, 0x4f, 0xe0, 0x7e, 0x57, 0x2b, 0xaa, 0xcd, 0xf8, 0xcd, 0xea,
                      0x24, 0xfc, 0x79, 0xcc, 0xbf, 0x09, 0x79, 0xe9, 0x37, 0x1a, 0xc2, 0x3c, 0x6d, 0x68, 0xde, 0x36]
 
-#maskX = [0x0f, 0x0e, 0x0d, 0x0c, 0x0b, 0x0a, 0x09, 0x08, 0x07, 0xd4, 0x05, 0x04, 0x03, 0x02, 0x01, 0x00]
-maskX = [0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00]
+maskX = [0x0f, 0x0e, 0x0d, 0x0c, 0x0b, 0x0a, 0x09, 0x08, 0x07, 0xd4, 0x05, 0x04, 0x03, 0x02, 0x01, 0x00]
 maskY = [0x01, 0x02, 0x03, 0x04, 0x05, 0x06, 0x07, 0x08, 0x09, 0x0a, 0x0b, 0x0c, 0x0d, 0x0e, 0x0f, 0x10]
 
 def printUsage():
@@ -193,8 +192,8 @@ def subBytesMask(byte):
     bitArray = bin(byte).lstrip('0b').zfill(8)
 
     aux = multiply(bitArray, m)
-    res = list(reversed(aux))
-    res = int(''.join(str(e) for e in res), 2)
+    #res = list(reversed(aux))
+    res = int(''.join(str(e) for e in aux), 2)
     return res
 
 
@@ -439,6 +438,19 @@ def invMixColumns(block):
 
 
 def cipher(key, keyLength):
+    print "Calculating masks"
+    print "Mask X: " + str(maskX)
+    maskX1 = []
+    for i in range(4):
+        row = []
+        for j in range(4):
+            row.append(subBytesMask(maskX[i * 4 + j]))
+        maskX1.append(row)
+    print "Mask X1" + str(maskX1)
+    maskX2 = shiftRows(maskX1)
+    print "Mask X2" + str(maskX2)
+    maskX3 = mixColumns(maskX2)
+    print "Mask X3" + str(maskX3)
     print "Ciphering: Initial AddRoundKey"
     cipheredText = listToMatrix(plainText)
     cipheredText = addRoundKey(cipheredText, key[0:16])  # Li passem el first block de la key
@@ -474,30 +486,18 @@ def cipher(key, keyLength):
         for i in range(4):
             for j in range(4):
                 cipheredText[i][j] = affineTransformation(cipheredText[i][j])
-        maskX1 = []
-        for i in range(4):
-            row = []
-            for j in range(4):
-                row.append(subBytesMask(maskX[i * 4 + j]))
-                print str(hex(cipheredText[i][j]))
-            maskX1.append(row)
         cipheredText = shiftRows(cipheredText)
-        maskX2 = shiftRows(maskX1)
         for i in range(4):
             for j in range(4):
                 print str(hex(cipheredText[i][j]))
         cipheredText = mixColumns(cipheredText)
-        maskX3 = mixColumns(maskX2)
         for i in range(4):
             for j in range(4):
                 print str(hex(cipheredText[i][j]))
-        #r = slice(i*16,i*16+16)
         cipheredText = addRoundKey(cipheredText, key[16*a:(16*a)+16])
         for i in range(4):
-            for i in range(4):
-                cipheredText[i][j] = cipheredText[i][j] ^ maskX3[i][j]
-        for i in range(4):
             for j in range(4):
+                cipheredText[i][j] = cipheredText[i][j] ^ maskX3[i][j]
                 print str(hex(cipheredText[i][j]))
     print "Ciphering: Last Round"
     print "Sub Bytes\n========="
@@ -527,15 +527,7 @@ def cipher(key, keyLength):
     for i in range(4):
         for j in range(4):
             cipheredText[i][j] = affineTransformation(cipheredText[i][j])
-    maskX1 = []
-    for i in range(4):
-        row = []
-        for j in range(4):
-            row.append(subBytesMask(maskX[i * 4 + j]))
-            print str(hex(cipheredText[i][j]))
-        maskX1.append(row)
     cipheredText = shiftRows(cipheredText)
-    maskX2 = shiftRows(maskX1)
     maskX2 = transposeMatrix(maskX2)
     cipheredText = transposeMatrix(cipheredText)  # Com no fem mixColumns, la transposem a ma
     for i in range(4):
