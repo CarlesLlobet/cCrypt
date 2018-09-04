@@ -373,6 +373,8 @@ def invSubBytesMask(byte):
     aux = multiply(bitArray, m)
     res = int(''.join(str(e) for e in aux), 2)
 
+    return res
+
 def invAffineTransformation(byte):
     # Multiplicaro per la matriu i sumarli el vector de la pag 32
     if (byte == 0x00):
@@ -398,6 +400,8 @@ def invAffineTransformation(byte):
         res.append(aux[7 - i] ^ y[i])
     res = list(reversed(res))
     res = int(''.join(str(e) for e in res), 2)
+
+    return res
 
 def invShiftRows(block):
     print "Inv Shift Rows\n========="
@@ -437,6 +441,8 @@ def invMixColumns(block):
 
 
 def cipher(key, keyLength):
+    global maskX
+    global maskY
     print "Calculating masks"
     print "Mask X: " + str(maskX)
     maskX1 = []
@@ -540,17 +546,20 @@ def cipher(key, keyLength):
     return listToMatrix(res)
 
 def decipher(key, keyLength):
+    global maskX
+    global maskY
     print "Calculating masks"
+    mask = listToMatrix(maskX)
     print "Mask X: " + str(maskX)
-    maskX1 = mixColumns(maskX)
+    maskX1 = invMixColumns(mask)
     print "Mask X1" + str(maskX1)
-    maskX2 = shiftRows(maskX1)
+    maskX2 = invShiftRows(maskX1)
     print "Mask X2" + str(maskX2)
     maskX3 = []
     for i in range(4):
         row = []
         for j in range(4):
-            row.append(invSubBytesMask(maskX2[i * 4 + j]))
+            row.append(invSubBytesMask(maskX2[i][j]))
         maskX3.append(row)
     print "Mask X3" + str(maskX3)
 
@@ -580,15 +589,15 @@ def decipher(key, keyLength):
         maskXY = []
         for i in range(4):
             for j in range(4):
-                cipheredText[i][j] = gf_mult(cipheredText[i][j], maskY[i * 4 + j])
+                decipheredText[i][j] = gf_mult(decipheredText[i][j], maskY[i * 4 + j])
                 maskXY.append(gf_mult(maskX[i * 4 + j], maskY[i * 4 + j]))
         invMaskY = []
         for i in range(4):
             for j in range(4):
-                cipheredText[i][j] = cipheredText[i][j] ^ maskXY[i * 4 + j]
+                decipheredText[i][j] = decipheredText[i][j] ^ maskXY[i * 4 + j]
         for i in range(4):
             for j in range(4):
-                cipheredText[i][j] = inverseMultiplicative(cipheredText[i][j])
+                decipheredText[i][j] = inverseMultiplicative(decipheredText[i][j])
                 invMaskY.append(inverseMultiplicative(maskY[i * 4 + j]))
         aux = []
         for i in range(4):
@@ -596,13 +605,13 @@ def decipher(key, keyLength):
                 aux.append(gf_mult(maskX[i * 4 + j], invMaskY[i * 4 + j]))
         for i in range(4):
             for j in range(4):
-                cipheredText[i][j] = cipheredText[i][j] ^ (aux[i * 4 + j])
+                decipheredText[i][j] = decipheredText[i][j] ^ (aux[i * 4 + j])
         for i in range(4):
             for j in range(4):
-                cipheredText[i][j] = gf_mult(cipheredText[i][j], maskY[i * 4 + j])
+                decipheredText[i][j] = gf_mult(decipheredText[i][j], maskY[i * 4 + j])
         for i in range(4):
             for j in range(4):
-                cipheredText[i][j] = invAffineTransformation(cipheredText[i][j])
+                decipheredText[i][j] = invAffineTransformation(decipheredText[i][j])
         decipheredText = addRoundKey(decipheredText, key[(nRounds.get(keyLength)*16) - (16 * a):(nRounds.get(keyLength)*16) - (16 * (a-1))])
         for i in range(4):
             for j in range(4):
@@ -620,15 +629,33 @@ def decipher(key, keyLength):
         for j in range(4):
             print str(hex(decipheredText[i][j]))
     print "InvSub Bytes\n========="
+    maskXY = []
     for i in range(4):
         for j in range(4):
-            decipheredText[i][j] = invSubBytes(decipheredText[i][j])
+            decipheredText[i][j] = gf_mult(decipheredText[i][j], maskY[i * 4 + j])
+            maskXY.append(gf_mult(maskX[i * 4 + j], maskY[i * 4 + j]))
+    invMaskY = []
     for i in range(4):
         for j in range(4):
-            print str(hex(decipheredText[i][j]))
+            decipheredText[i][j] = decipheredText[i][j] ^ maskXY[i * 4 + j]
     for i in range(4):
         for j in range(4):
-            print str(hex(decipheredText[i][j]))
+            decipheredText[i][j] = inverseMultiplicative(decipheredText[i][j])
+            invMaskY.append(inverseMultiplicative(maskY[i * 4 + j]))
+    aux = []
+    for i in range(4):
+        for j in range(4):
+            aux.append(gf_mult(maskX[i * 4 + j], invMaskY[i * 4 + j]))
+    for i in range(4):
+        for j in range(4):
+            decipheredText[i][j] = decipheredText[i][j] ^ (aux[i * 4 + j])
+    for i in range(4):
+        for j in range(4):
+            decipheredText[i][j] = gf_mult(decipheredText[i][j], maskY[i * 4 + j])
+    for i in range(4):
+        for j in range(4):
+            decipheredText[i][j] = invAffineTransformation(decipheredText[i][j])
+
     decipheredText = addRoundKey(decipheredText, key[0:16])
     for i in range(4):
         for j in range(4):
@@ -712,11 +739,11 @@ else:
                 for i in range(4):
                     for j in range(4):
                         print str(hex(cipheredText[i][j]))
-                # decipheredText = decipher(keyExpanded, 128)
-                # print "Deciphered Text is: "
-                # for i in range(4):
-                #     for j in range(4):
-                #         print str(hex(decipheredText[i][j]))
+                decipheredText = decipher(keyExpanded, 128)
+                print "Deciphered Text is: "
+                for i in range(4):
+                    for j in range(4):
+                        print str(hex(decipheredText[i][j]))
             elif keyLength == 192:
                 keyExpanded = keyExpansion(192)
                 # if (checkKeyExpanded(keyExpanded, keyAes192expanded)):
@@ -728,11 +755,11 @@ else:
                 for i in range(4):
                     for j in range(4):
                         print str(hex(cipheredText[i][j]))
-                # decipheredText = decipher(keyExpanded, 192)
-                # print "Deciphered Text is: "
-                # for i in range(4):
-                #    for j in range(4):
-                #        print str(hex(decipheredText[i][j]))
+                decipheredText = decipher(keyExpanded, 192)
+                print "Deciphered Text is: "
+                for i in range(4):
+                   for j in range(4):
+                       print str(hex(decipheredText[i][j]))
             elif keyLength == 256:
                 keyExpanded = keyExpansion(256)
                 # if (checkKeyExpanded(keyExpanded, keyAes256expanded)):
@@ -744,8 +771,8 @@ else:
                 for i in range(4):
                     for j in range(4):
                         print str(hex(cipheredText[i][j]))
-                # decipheredText = decipher(keyExpanded, 256)
-                # print "Deciphered Text is: "
-                # for i in range(4):
-                #     for j in range(4):
-                #         print str(hex(decipheredText[i][j]))
+                decipheredText = decipher(keyExpanded, 256)
+                print "Deciphered Text is: "
+                for i in range(4):
+                    for j in range(4):
+                        print str(hex(decipheredText[i][j]))
