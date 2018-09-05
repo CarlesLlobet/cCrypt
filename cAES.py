@@ -555,7 +555,7 @@ else:
             print "ERROR: First argument must be a valid keyLength or -h/--help"
             printUsage()
         else:
-            print "Arguments correctly provided, going to check SBOX generation"
+            print "Arguments correctly provided"
             # if (checkSBOX()):
             #     print "sBOX correcta"
             # else:

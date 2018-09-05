@@ -93,7 +93,7 @@ maskX = [0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
 maskY = [0x01, 0x01, 0x01, 0x01, 0x01, 0x01, 0x01, 0x01, 0x01, 0x01, 0x01, 0x01, 0x01, 0x01, 0x01, 0x01]
 
 def printUsage():
-    print "Usage: \n'python cAES.py [-h/--help]' to print this Usage\n'python cAES.py [128/192/256]' to cipher and decipher test plaintext"
+    print "Usage: \n'python cAES_masked.py [-h/--help]' to print this Usage\n'python cAES_masked.py [128/192/256]' to cipher and decipher test plaintext"
     exit()
 
 
@@ -721,7 +721,7 @@ else:
             print "ERROR: First argument must be a valid keyLength or -h/--help"
             printUsage()
         else:
-            print "Arguments correctly provided, going to check SBOX generation"
+            print "Arguments correctly provided"
             # if (checkSBOX()):
             #     print "sBOX correcta"
             # else:
