@@ -2,8 +2,12 @@
 import sys
 from __builtin__ import bytearray
 
-plainText = [0x00, 0x11, 0x22, 0x33, 0x44, 0x55, 0x66, 0x77]
+# ASCII for 'abcdefgh'
+plainText = [0x61, 0x62, 0x63, 0x64, 0x65, 0x66, 0x67, 0x68]
+expectedResult = [0xfc, 0x13, 0xbf, 0x72, 0x74, 0x90, 0x99, 0xac]
+
 keyDES = [0x00, 0x01, 0x02, 0x03, 0x04, 0x05, 0x06, 0x07]
+expectedExpandedKey = "000000000000000000000000000100000010001100000111000000000000000000000000001101000000000100000101000000000000000000000000000000100010000011000110000000000000000000000000011001001010000110000001000000000000000000000000001000100000010001001011000000000000000000000000010011101001000100000010000000000000000000000000000001000100010101101000000000000000000000000000010010001001100001000000000000000000000000000000010010001000000001111000000000000000000000000000100000011101110000001000000000000000000000000000000010000001011000110000000000000000000000000000100110010100100000100100000000000000000000000000000000000100101010010000000000000000000000000000100100010010000000010101000000000000000000000000101000110000001010000000000000000000000000000000000100110010001010000010"
 
 s1 = [[14, 4, 13, 1, 2, 15, 11, 8, 3, 10, 6, 12, 5, 9, 0, 7],
       [0, 15, 7, 4, 14, 2, 13, 1, 10, 6, 12, 11, 9, 5, 3, 8],
@@ -45,6 +49,7 @@ s8 = [[13, 2, 8, 4, 6, 15, 11, 1, 10, 9, 3, 14, 5, 0, 12, 7],
       [7, 11, 4, 1, 9, 12, 14, 2, 0, 6, 10, 13, 15, 3, 5, 8],
       [2, 1, 14, 7, 4, 10, 8, 13, 15, 12, 9, 0, 3, 5, 6, 11]]
 
+
 def printUsage():
     print "Usage: \n'python cDES.py [-h/--help]' to print this Usage\n'python cDES.py [T/N]' to cipher and decipher test plaintext with Triple or Normal DES"
     exit()
@@ -84,6 +89,7 @@ def invInitPermute(text):
                   48] + binText[16] + binText[56] + binText[24]
 
     return binText
+
 
 def sBOX(chunk, s):
     if chunk[0] == "0" and chunk[5] == "0":
@@ -151,7 +157,6 @@ def sBOX(chunk, s):
     return chunk
 
 
-
 def feistelFunction(block, subKey):
     # Expansion
     block = block[31] + block[0] + block[1] + block[2] + block[3] + block[4] + block[3] + block[4] + block[5] + block[
@@ -167,7 +172,7 @@ def feistelFunction(block, subKey):
     # Substitution
     res = ""
     for i in range(0, len(input), 6):
-        res += sBOX(input[i:i+6], i/6)
+        res += sBOX(input[i:i + 6], i / 6)
 
     # Permutation
     res = res[15] + res[6] + res[19] + res[20] + res[28] + res[11] + res[27] + res[16] + res[0] + res[14] + res[22] + \
@@ -186,11 +191,11 @@ def cipher(key):
 
     for r in range(15):
         print "Round " + str(r) + "\n========="
-        R = bin(int(L,2) ^ int(feistelFunction(R, key[48 * r:(48 * r) + 48]), 2)).lstrip('0b').zfill(48)
+        R = bin(int(L, 2) ^ int(feistelFunction(R, key[48 * r:(48 * r) + 48]), 2)).lstrip('0b').zfill(48)
         L = R
 
     print "Last Round\n========="
-    L = bin(int(L,2) ^ int(feistelFunction(R, key[48 * r:(48 * r) + 48]), 2)).lstrip('0b').zfill(48)
+    L = bin(int(L, 2) ^ int(feistelFunction(R, key[48 * r:(48 * r) + 48]), 2)).lstrip('0b').zfill(48)
 
     cipheredText = L + R
 
@@ -261,10 +266,10 @@ else:
         print "Arguments correctly provided"
         if str(args[0]) == "N":
             keyExpanded = keyExpansion()
-            # if(checkKeyExpanded(keyExpanded,keyAes128expanded)):
-            # 	print "KeyExpansion correcta"
-            # else:
-            #     print "KeyExpansion incorrecta"
+            if(keyExpanded == expectedExpandedKey):
+            	print "KeyExpansion correcta"
+            else:
+                print "KeyExpansion incorrecta"
 
             cipheredText = cipher(keyExpanded)
             # print "Ciphered Text is: "
