@@ -73,7 +73,7 @@ def initPermute(text):
     return binText
 
 
-def invInitPermute(text):
+def invInitPermute(binText):
     # binText = bin(0).lstrip('0b')
     # for i in text:
     #     binText += bin(i).lstrip('0b').zfill(8)
@@ -272,6 +272,12 @@ else:
                 print "KeyExpansion incorrecta"
 
             cipheredText = cipher(keyExpanded)
+            hexCipheredText = []
+            for i in range(0, len(cipheredText),8):
+                hexCipheredText.append(hex(int(cipheredText[i:i+8],2)).rstrip('L'))
+
+
+            print str(hexCipheredText)
             # print "Ciphered Text is: "
             # for i in range(4):
             #     for j in range(4):
