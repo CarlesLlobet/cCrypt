@@ -69,9 +69,9 @@ def initPermute(text):
 
 
 def invInitPermute(text):
-    binText = bin(0).lstrip('0b')
-    for i in text:
-        binText += bin(i).lstrip('0b').zfill(8)
+    # binText = bin(0).lstrip('0b')
+    # for i in text:
+    #     binText += bin(i).lstrip('0b').zfill(8)
 
     binText = binText[39] + binText[7] + binText[47] + binText[15] + binText[55] + binText[23] + binText[63] + binText[
         31] + binText[38] + binText[6] + binText[46] + binText[14] + binText[54] + binText[22] + binText[62] + binText[
@@ -162,11 +162,12 @@ def feistelFunction(block, subKey):
             block[31] + block[0]
 
     # Key Mixing
-    res = block ^ subKey
+    input = bin(int(block, 2) ^ int(subKey, 2)).lstrip('0b').zfill(48)
 
     # Substitution
-    for i in range(0, len(res), 6):
-        res[i:i+6] = sBOX(res[i:i+6], i)
+    res = ""
+    for i in range(0, len(input), 6):
+        res += sBOX(input[i:i+6], i/6)
 
     # Permutation
     res = res[15] + res[6] + res[19] + res[20] + res[28] + res[11] + res[27] + res[16] + res[0] + res[14] + res[22] + \
@@ -185,11 +186,11 @@ def cipher(key):
 
     for r in range(15):
         print "Round " + str(r) + "\n========="
-        R = (L ^ feistelFunction(R, key[48 * r:(48 * r) + 48]))
+        R = bin(int(L,2) ^ int(feistelFunction(R, key[48 * r:(48 * r) + 48]), 2)).lstrip('0b').zfill(48)
         L = R
 
     print "Last Round\n========="
-    L = (L ^ feistelFunction(R, key[48 * r:(48 * r) + 48]))
+    L = bin(int(L,2) ^ int(feistelFunction(R, key[48 * r:(48 * r) + 48]), 2)).lstrip('0b').zfill(48)
 
     cipheredText = L + R
 
