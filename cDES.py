@@ -51,7 +51,7 @@ s8 = [[13, 2, 8, 4, 6, 15, 11, 1, 10, 9, 3, 14, 5, 0, 12, 7],
 
 
 def printUsage():
-    print "Usage: \n'python cDES.py [-h/--help]' to print this Usage\n'python cDES.py [T/N]' to cipher and decipher test plaintext with Triple or Normal DES"
+    print "Usage: \n'python cDES.py [-h/--help]' to print this Usage\n'python cDES.py [N]' to cipher and decipher test plaintext"
     exit()
 
 
@@ -285,33 +285,29 @@ if len(args) != 1:
 else:
     if str(args[0]) == "-h" or str(args[0]) == "--help":
         printUsage()
-    elif str(args[0]) == "T" or str(args[0]) == "N":
+    elif str(args[0]) == "N":
         print "Arguments correctly provided"
-        if str(args[0]) == "N":
-            keyExpanded = keyExpansion()
-            if(keyExpanded == expectedExpandedKey):
-            	print "KeyExpansion correcta"
-            else:
-                print "KeyExpansion incorrecta"
+        keyExpanded = keyExpansion()
+        if(keyExpanded == expectedExpandedKey):
+            print "KeyExpansion correcta"
+        else:
+            print "KeyExpansion incorrecta"
 
-            cipheredText = cipher(keyExpanded)
-            hexCipheredText = []
-            for i in range(0, len(cipheredText),8):
-                hexCipheredText.append(hex(int(cipheredText[i:i+8],2)).rstrip('L'))
+        cipheredText = cipher(keyExpanded)
+        hexCipheredText = []
+        for i in range(0, len(cipheredText),8):
+            hexCipheredText.append(hex(int(cipheredText[i:i+8],2)).rstrip('L'))
 
-            print "Ciphered Text is: "
-            print str(hexCipheredText)
+        print "Ciphered Text is: "
+        print str(hexCipheredText)
 
-            decipheredText = decipher(keyExpanded)
-            hexDecipheredText = []
-            for i in range(0, len(decipheredText), 8):
-                hexDecipheredText.append(hex(int(decipheredText[i:i + 8], 2)).rstrip('L'))
+        decipheredText = decipher(keyExpanded)
+        hexDecipheredText = []
+        for i in range(0, len(decipheredText), 8):
+            hexDecipheredText.append(hex(int(decipheredText[i:i + 8], 2)).rstrip('L'))
 
-            print "Deciphered Text is: "
-            print str(hexDecipheredText)
-
-        elif str(args[0]) == "T":
-            print "Not implemented yet"
+        print "Deciphered Text is: "
+        print str(hexDecipheredText)
     else:
         print "ERROR: First argument must be a valid type or -h/--help"
         printUsage()
