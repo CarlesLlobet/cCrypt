@@ -191,11 +191,12 @@ def cipher(key):
 
     for r in range(15):
         print "Round " + str(r) + "\n========="
-        R = bin(int(L, 2) ^ int(feistelFunction(R, key[48 * r:(48 * r) + 48]), 2)).lstrip('0b').zfill(48)
-        L = R
+        A = R
+        R = bin(int(L, 2) ^ int(feistelFunction(R, key[48 * r:(48 * r) + 48]), 2)).lstrip('0b').zfill(32)
+        L = A
 
     print "Last Round\n========="
-    L = bin(int(L, 2) ^ int(feistelFunction(R, key[48 * r:(48 * r) + 48]), 2)).lstrip('0b').zfill(48)
+    L = bin(int(L, 2) ^ int(feistelFunction(R, key[-48:]), 2)).lstrip('0b').zfill(32)
 
     cipheredText = L + R
 
