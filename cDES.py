@@ -204,6 +204,28 @@ def cipher(key):
 
     return cipheredText
 
+def decipher(key):
+    print "Ciphering: Initial Permutation"
+    decipheredText = initPermute(expectedResult)
+
+    L = decipheredText[0:32]
+    R = decipheredText[32:64]
+
+    for r in range(15):
+        print "Round " + str(r) + "\n========="
+        A = R
+        R = bin(int(L, 2) ^ int(feistelFunction(R, key[768-(48*r)-48:768-(48*r)]), 2)).lstrip('0b').zfill(32)
+        L = A
+
+    print "Last Round\n========="
+    L = bin(int(L, 2) ^ int(feistelFunction(R, key[:48]), 2)).lstrip('0b').zfill(32)
+
+    decipheredText = L + R
+
+    decipheredText = invInitPermute(decipheredText)
+
+    return decipheredText
+
 
 def keyExpansion():
     keyBits = bin(0).lstrip('0b')
@@ -277,18 +299,17 @@ else:
             for i in range(0, len(cipheredText),8):
                 hexCipheredText.append(hex(int(cipheredText[i:i+8],2)).rstrip('L'))
 
-
+            print "Ciphered Text is: "
             print str(hexCipheredText)
-            # print "Ciphered Text is: "
-            # for i in range(4):
-            #     for j in range(4):
-            #         print str(hex(cipheredText[i][j]))
-            # keyExpanded = rotate(keyExpanded)
-            # decipheredText = cipher(keyExpanded)
-            # print "Deciphered Text is: "
-            # for i in range(4):
-            #     for j in range(4):
-            #         print str(hex(decipheredText[i][j]))
+
+            decipheredText = decipher(keyExpanded)
+            hexDecipheredText = []
+            for i in range(0, len(decipheredText), 8):
+                hexDecipheredText.append(hex(int(decipheredText[i:i + 8], 2)).rstrip('L'))
+
+            print "Deciphered Text is: "
+            print str(hexDecipheredText)
+
         elif str(args[0]) == "T":
             print "Not implemented yet"
     else:
