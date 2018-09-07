@@ -101,38 +101,7 @@ def sBOX(chunk, s):
     elif chunk[0] == "1" and chunk[5] == "1":
         i = 3
 
-    if chunk[1:5] == "0000":
-        j = 0
-    elif chunk[1:5] == "0001":
-        j = 1
-    elif chunk[1:5] == "0010":
-        j = 2
-    elif chunk[1:5] == "0011":
-        j = 3
-    elif chunk[1:5] == "0100":
-        j = 4
-    elif chunk[1:5] == "0101":
-        j = 5
-    elif chunk[1:5] == "0110":
-        j = 6
-    elif chunk[1:5] == "0111":
-        j = 7
-    elif chunk[1:5] == "1000":
-        j = 8
-    elif chunk[1:5] == "1001":
-        j = 9
-    elif chunk[1:5] == "1010":
-        j = 10
-    elif chunk[1:5] == "1011":
-        j = 11
-    elif chunk[1:5] == "1100":
-        j = 12
-    elif chunk[1:5] == "1101":
-        j = 13
-    elif chunk[1:5] == "1110":
-        j = 14
-    elif chunk[1:5] == "1111":
-        j = 15
+    j = int(chunk[1:5], 2)
 
     if s == 0:
         chunk = bin(s1[i][j]).lstrip('0b').zfill(4)
@@ -166,37 +135,54 @@ def feistelFunction(block, subKey):
             block[24] + block[25] + block[26] + block[27] + block[28] + block[27] + block[28] + block[29] + block[30] + \
             block[31] + block[0]
 
+    print "Expansion: " + block
+
     # Key Mixing
     input = bin(int(block, 2) ^ int(subKey, 2)).lstrip('0b').zfill(48)
+
+    print "Key Mixing: " + input
 
     # Substitution
     res = ""
     for i in range(0, len(input), 6):
         res += sBOX(input[i:i + 6], i / 6)
 
+    print "Sbox: " + res
+
     # Permutation
     res = res[15] + res[6] + res[19] + res[20] + res[28] + res[11] + res[27] + res[16] + res[0] + res[14] + res[22] + \
           res[25] + res[4] + res[17] + res[30] + res[9] + res[1] + res[7] + res[23] + res[13] + res[31] + res[26] + res[
               2] + res[8] + res[18] + res[12] + res[29] + res[5] + res[21] + res[10] + res[3] + res[24]
 
+    print "Permutation: " + res
+
     return res
 
 
 def cipher(key):
-    print "Ciphering: Initial Permutation"
+    print "Ciphering: Initial Permutation\n========="
     cipheredText = initPermute(plainText)
 
     L = cipheredText[0:32]
     R = cipheredText[32:64]
 
+    print "L: " + L
+    print "R: " + R
+
     for r in range(15):
-        print "Round " + str(r) + "\n========="
+        print "Ciphering: Round " + str(r) + "\n========="
         A = R
         R = bin(int(L, 2) ^ int(feistelFunction(R, key[48 * r:(48 * r) + 48]), 2)).lstrip('0b').zfill(32)
         L = A
 
-    print "Last Round\n========="
+        print "L: " + L
+        print "R: " + R
+
+    print "Ciphering: Last Round\n========="
     L = bin(int(L, 2) ^ int(feistelFunction(R, key[-48:]), 2)).lstrip('0b').zfill(32)
+
+    print "L: " + L
+    print "R: " + R
 
     cipheredText = L + R
 
@@ -205,20 +191,28 @@ def cipher(key):
     return cipheredText
 
 def decipher(key):
-    print "Ciphering: Initial Permutation"
+    print "Deciphering: Initial Permutation\n========="
     decipheredText = initPermute(expectedResult)
 
     L = decipheredText[0:32]
     R = decipheredText[32:64]
 
+    print "L: " + L
+    print "R: " + R
+
     for r in range(15):
-        print "Round " + str(r) + "\n========="
+        print "Deciphering: Round " + str(r) + "\n========="
         A = R
         R = bin(int(L, 2) ^ int(feistelFunction(R, key[768-(48*r)-48:768-(48*r)]), 2)).lstrip('0b').zfill(32)
         L = A
+        print "L: " + L
+        print "R: " + R
 
-    print "Last Round\n========="
+    print "Deciphering: Last Round\n========="
     L = bin(int(L, 2) ^ int(feistelFunction(R, key[:48]), 2)).lstrip('0b').zfill(32)
+
+    print "L: " + L
+    print "R: " + R
 
     decipheredText = L + R
 
