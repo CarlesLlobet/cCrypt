@@ -176,7 +176,7 @@ def affineTransformation(byte):
     res = int(''.join(str(e) for e in res), 2)
     return res
 
-def subBytesMask(byte):
+def affineTransformationMask(byte):
     # Multiplicaro per la matriu (part lineal de la Affine Transformation)
 
     # Ara a g1 tenim la inversa multiplicativa V(x)
@@ -192,7 +192,6 @@ def subBytesMask(byte):
     bitArray = bin(byte).lstrip('0b').zfill(8)
 
     aux = multiply(bitArray, m)
-    #res = list(reversed(aux))
     res = int(''.join(str(e) for e in aux), 2)
     return res
 
@@ -319,7 +318,7 @@ def keyExpansion(keyLength):
             if (c % 24 == 0):
                 rotate(t)
                 for a in range(4):
-                    t[a] = subBytes(t[a])
+                    t[a] = affineTransformationMask(t[a])
                 t[0] ^= rcon(i)
                 i += 1
             # Red
@@ -340,23 +339,21 @@ def keyExpansion(keyLength):
             if (c % 32 == 0):
                 rotate(t)
                 for a in range(4):
-                    t[a] = subBytes(t[a])
+                    t[a] = affineTransformationMask(t[a])
                 t[0] ^= rcon(i)
                 i += 1
             # Black
             elif (c % 32 == 16):
                 for a in range(4):
-                    t[a] = subBytes(t[a])
+                    t[a] = affineTransformationMask(t[a])
             # Red
             for a in range(4):
                 resultKey.append(resultKey[c - 32] ^ t[a])
                 c += 1
         return resultKey
 
-def invSubBytesMask(byte):
+def invAffineTransformationMask(byte):
     # Multiplicaro per la matriu i sumarli el vector de la pag 32 y dspres reure V(x) del byte fent la inversa
-    if (byte == 0x00):
-        return 0x00
 
     # Ara a g1 tenim la inversa multiplicativa V(x)
     m = [[0, 0, 1, 0, 0, 1, 0, 1],
@@ -377,8 +374,6 @@ def invSubBytesMask(byte):
 
 def invAffineTransformation(byte):
     # Multiplicaro per la matriu i sumarli el vector de la pag 32
-    if (byte == 0x00):
-        return 0x00
 
     # Ara a g1 tenim la inversa multiplicativa V(x)
     m = [[0, 0, 1, 0, 0, 1, 0, 1],
@@ -400,11 +395,9 @@ def invAffineTransformation(byte):
         res.append(aux[7 - i] ^ y[i])
     res = list(reversed(res))
     res = int(''.join(str(e) for e in res), 2)
-
     return res
 
 def invShiftRows(block):
-    print "Inv Shift Rows\n========="
     return [[block[0][0], block[1][0], block[2][0], block[3][0]],
             [block[3][1], block[0][1], block[1][1], block[2][1]],
             [block[2][2], block[3][2], block[0][2], block[1][2]],
@@ -412,7 +405,6 @@ def invShiftRows(block):
 
 
 def invMixColumns(block):
-    print "Inv Mix Columns\n========="
     mixedBlock = [None] * 4
     # Pillem cada columna (amb zip fem la transposada per no pillar files)
     e = 0
@@ -449,7 +441,7 @@ def cipher(key, keyLength):
     for i in range(4):
         row = []
         for j in range(4):
-            row.append(subBytesMask(maskX[i * 4 + j]))
+            row.append(affineTransformationMask(maskX[i * 4 + j]))
         maskX1.append(row)
     print "Mask X1" + str(maskX1)
     maskX2 = shiftRows(maskX1)
@@ -554,16 +546,18 @@ def decipher(key, keyLength):
     print "Calculating masks"
     mask = listToMatrix(maskX)
     print "Mask X: " + str(maskX)
-    maskX1 = invMixColumns(mask)
+    #maskX1 = transposeMatrix(mask)
+    maskX1 = invShiftRows(mask)
+    maskX1 = transposeMatrix(maskX1)
     print "Mask X1" + str(maskX1)
-    maskX2 = invShiftRows(maskX1)
-    print "Mask X2" + str(maskX2)
-    maskX3 = []
+    maskX2 = []
     for i in range(4):
         row = []
         for j in range(4):
-            row.append(invSubBytesMask(maskX2[i][j]))
-        maskX3.append(row)
+            row.append(invAffineTransformationMask(maskX1[i][j]))
+        maskX2.append(row)
+    print "Mask X2" + str(maskX2)
+    maskX3 = invMixColumns(maskX2)
     print "Mask X3" + str(maskX3)
 
     print "Deciphering: Initial AddRoundKey"
@@ -577,16 +571,17 @@ def decipher(key, keyLength):
     decipheredText = addRoundKey(decipheredText, key[nRounds.get(keyLength) * 16:])  # Li passem el first block de la key
     for i in range(4):
         for j in range(4):
-            print str(hex(decipheredText[i][j]))
-
+            print str(hex(decipheredText[i][j] ^ mask[i][j]))
 
     for a in range(1, nRounds.get(keyLength)):
         print "Deciphering: Loop " + str(a)
+        print "InvShiftRows\n========="
+        #decipheredText = transposeMatrix(decipheredText)
         decipheredText = invShiftRows(decipheredText)
         decipheredText = transposeMatrix(decipheredText)  # Com no fem mixColumns, la transposem a ma
         for i in range(4):
             for j in range(4):
-                print str(hex(decipheredText[i][j]))
+                print str(hex(decipheredText[i][j] ^ maskX1[i][j]))
         print "InvSub Bytes\n========="
         for i in range(4):
             for j in range(4):
@@ -616,19 +611,29 @@ def decipher(key, keyLength):
                 decipheredText[i][j] = gf_mult(decipheredText[i][j], maskY[i * 4 + j])
         for i in range(4):
             for j in range(4):
-                print str(hex(decipheredText[i][j]))
-        decipheredText = addRoundKey(decipheredText, key[(nRounds.get(keyLength)*16) - (16 * a):(nRounds.get(keyLength)*16) - (16 * (a-1))])
+                print str(hex(decipheredText[i][j] ^ maskX2[i][j]))
+        print "AddRoundKey\n========="
+        loopKeyBlock = key[(nRounds.get(keyLength) * 16) - (16 * a):(nRounds.get(keyLength) * 16) - (16 * (a - 1))]
+        res = []
         for i in range(4):
             for j in range(4):
-                decipheredText[i][j] = decipheredText[i][j] ^ maskX3[i][j]
-                print str(hex(decipheredText[i][j]))
+                res.append(decipheredText[i][j] ^ loopKeyBlock[i * 4 + j])
+        decipheredText = listToMatrix(res)
+        for i in range(4):
+            for j in range(4):
+                print str(hex(decipheredText[i][j] ^ maskX2[i][j]))
+        print "InvMixColumns\n========="
         decipheredText = invMixColumns(decipheredText)
         for i in range(4):
             for j in range(4):
-                print str(hex(decipheredText[i][j]))
+                decipheredText[i][j] = decipheredText[i][j] ^ maskX3[i][j] ^ mask[i][j]
+                print str(hex(decipheredText[i][j]^mask[i][j]))
+
     print "Deciphering: Last Round"
+    print "InvShiftRows\n========="
     decipheredText = invShiftRows(decipheredText)
     decipheredText = transposeMatrix(decipheredText)  # Com no fem mixColumns, la transposem a ma
+    maskX2 = transposeMatrix(maskX2)
     for i in range(4):
         for j in range(4):
             print str(hex(decipheredText[i][j]))
@@ -659,8 +664,17 @@ def decipher(key, keyLength):
     for i in range(4):
         for j in range(4):
             decipheredText[i][j] = gf_mult(decipheredText[i][j], maskY[i * 4 + j])
+    for i in range(4):
+        for j in range(4):
+            print str(hex(decipheredText[i][j]))
 
-    decipheredText = addRoundKey(decipheredText, key[0:16])
+    lastRoundKeyBlock = key[0:16]
+    res = []
+    for i in range(4):
+        for j in range(4):
+            res.append(decipheredText[i][j] ^ lastRoundKeyBlock[i * 4 + j])
+
+    decipheredText = listToMatrix(res)
     for i in range(4):
         for j in range(4):
             decipheredText[i][j] = decipheredText[i][j] ^ maskX2[i][j]
@@ -672,7 +686,7 @@ def checkSBOX():
     pos = 0
     for posByte in range(0x00, 0xFF):
         print "Checking if byte " + str(hex(posByte)) + " corresponds to " + str(hex(sBox[pos]))
-        calc = subBytes(posByte)
+        calc = affineTransformationMask(posByte)
         if sBox[pos] != calc:
             print "Esperat: " + str(hex(sBox[pos])) + "\nCalculat: " + str(hex(calc)) + "\n"
             return False
@@ -685,7 +699,7 @@ def checkInvSBOX():
     pos = 0
     for posByte in range(0x00, 0xFF):
         print "Checking if byte " + str(hex(posByte)) + " corresponds to " + str(hex(invSBox[pos]))
-        calc = invSubBytes(posByte)
+        calc = invAffineTransformationMask(posByte)
         if invSBox[pos] != calc:
             print "Esperat: " + str(hex(invSBox[pos])) + "\nCalculat: " + str(hex(calc)) + "\n"
             return False
