@@ -134,9 +134,6 @@ def r2l(m, e, n):
 
     return A
 
-def slidingWindows(m, e, n):
-    return None
-
 def monLadder(m, e, n):
     A = m
     B = m*m
@@ -159,6 +156,22 @@ def monLadder(m, e, n):
 
     return A
 
+def monProduct(a, b, n):
+    # Calculate n1 so that (r)(r^-1) - n*n1 = 1
+
+    t = a * b
+    m = t * n1 % r
+    u = (t + m * n) / r
+    if (u > n):
+        u = u - n
+    return u
+
+def slidingWindows(m, e, n):
+    return None
+
+def kary(m, e, n):
+    return None
+
 
 ### MAIN ###
 args = sys.argv[1:]
@@ -169,7 +182,7 @@ if len(args) != 1:
 else:
     if str(args[0]) == "-h" or str(args[0]) == "--help":
         printUsage()
-    if str(args[0]) == "l2r" or str(args[0]) == "r2l" or str(args[0]) == "slidingWindows" or str(args[0]) == "ladder":
+    if str(args[0]) == "l2r" or str(args[0]) == "r2l" or str(args[0]) == "slidingWindows" or str(args[0]) == "ladder" or str(args[0]) == "kary":
         print "Key Generation\n========="
         p, q, n, e, d = keyGeneration()
         print "p = " + str(p) + "\n"
@@ -183,32 +196,50 @@ else:
         print "d = " + str(d) + "\n"
         print "d has " + str(len(bin(d))) + " bits\n"
 
+        print "Montgomery product\n========="
+        a = 13
+        b = 17
+        n = 41
+
+        print "Montgomery product of 13*17 mod 41 is " + str(monProduct(a, b, n)) + "\n"
+
         # cipheredText = (plainText ^ e) % n
         # decipheredText = (cipheredText ^ d) % n
         if str(args[0]) == "l2r":
+            print "Left to Right\n========="
             cipheredText = l2r(plainText,e,n)
-            print "Ciphered Text is " + str(cipheredText) + "\n"
+            print "Ciphered Text is " + str(cipheredText)
 
             decipheredText = l2r(cipheredText,d,n)
             print "Deciphered Text is " + str(decipheredText)
 
         elif str(args[0]) == "r2l":
+            print "Right to Left\n========="
             cipheredText = r2l(plainText, e, n)
-            print "Ciphered Text is " + str(cipheredText) + "\n"
+            print "Ciphered Text is " + str(cipheredText)
 
             decipheredText = r2l(cipheredText, d, n)
             print "Deciphered Text is " + str(decipheredText)
         elif str(args[0]) == "slidingWindows":
+            print "Sliding Windows\n========="
             cipheredText = slidingWindows(plainText, e, n)
-            print "Ciphered Text is " + str(cipheredText) + "\n"
+            print "Ciphered Text is " + str(cipheredText)
 
             decipheredText = slidingWindows(cipheredText, d, n)
             print "Deciphered Text is " + str(decipheredText)
         elif str(args[0]) == "ladder":
+            print "Montgomery Ladder\n========="
             cipheredText = monLadder(plainText, e, n)
-            print "Ciphered Text is " + str(cipheredText) + "\n"
+            print "Ciphered Text is " + str(cipheredText)
 
             decipheredText = monLadder(cipheredText, d, n)
+            print "Deciphered Text is " + str(decipheredText)
+        elif str(args[0]) == "kary":
+            print "K-ary\n========="
+            cipheredText = kary(plainText, e, n)
+            print "Ciphered Text is " + str(cipheredText)
+
+            decipheredText = kary(cipheredText, d, n)
             print "Deciphered Text is " + str(decipheredText)
     else:
         print "ERROR: First argument must be a valid exponentiation method or -h/--help"
