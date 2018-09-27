@@ -89,7 +89,7 @@ keyAes256expanded = [0x00, 0x01, 0x02, 0x03, 0x04, 0x05, 0x06, 0x07, 0x08, 0x09,
                      0x4e, 0x5a, 0x66, 0x99, 0xa9, 0xf2, 0x4f, 0xe0, 0x7e, 0x57, 0x2b, 0xaa, 0xcd, 0xf8, 0xcd, 0xea,
                      0x24, 0xfc, 0x79, 0xcc, 0xbf, 0x09, 0x79, 0xe9, 0x37, 0x1a, 0xc2, 0x3c, 0x6d, 0x68, 0xde, 0x36]
 
-maskX = [0x0f, 0x0e, 0x0d, 0x0c, 0x0b, 0x0a, 0x09, 0x08, 0x07, 0xd4, 0x05, 0x04, 0x03, 0x02, 0x01, 0x00]	
+maskX = [0x0f, 0x0e, 0x0d, 0x0c, 0x0b, 0x0a, 0x09, 0x08, 0x07, 0x06, 0x05, 0x04, 0x03, 0x02, 0x01, 0x00]
 maskY = [0x01, 0x02, 0x03, 0x04, 0x05, 0x06, 0x07, 0x08, 0x09, 0x0a, 0x0b, 0x0c, 0x0d, 0x0e, 0x0f, 0x10]	
 
 
@@ -545,8 +545,7 @@ def decipher(key, keyLength):
     global maskY
     print "Calculating masks"
     mask = listToMatrix(maskX)
-    print "Mask X: " + str(maskX)
-    #maskX1 = transposeMatrix(mask)
+    print "Mask X: " + str(mask)
     maskX1 = invShiftRows(mask)
     maskX1 = transposeMatrix(maskX1)
     print "Mask X1" + str(maskX1)
@@ -576,7 +575,6 @@ def decipher(key, keyLength):
     for a in range(1, nRounds.get(keyLength)):
         print "Deciphering: Loop " + str(a)
         print "InvShiftRows\n========="
-        #decipheredText = transposeMatrix(decipheredText)
         decipheredText = invShiftRows(decipheredText)
         decipheredText = transposeMatrix(decipheredText)  # Com no fem mixColumns, la transposem a ma
         for i in range(4):
@@ -590,7 +588,7 @@ def decipher(key, keyLength):
         for i in range(4):
             for j in range(4):
                 decipheredText[i][j] = gf_mult(decipheredText[i][j], maskY[i * 4 + j])
-                maskXY.append(gf_mult(maskX[i * 4 + j], maskY[i * 4 + j]))
+                maskXY.append(gf_mult(maskX2[i][j], maskY[i * 4 + j]))
         invMaskY = []
         for i in range(4):
             for j in range(4):
@@ -602,7 +600,7 @@ def decipher(key, keyLength):
         aux = []
         for i in range(4):
             for j in range(4):
-                aux.append(gf_mult(maskX[i * 4 + j], invMaskY[i * 4 + j]))
+                aux.append(gf_mult(maskX2[i][j], invMaskY[i * 4 + j]))
         for i in range(4):
             for j in range(4):
                 decipheredText[i][j] = decipheredText[i][j] ^ (aux[i * 4 + j])
@@ -633,10 +631,9 @@ def decipher(key, keyLength):
     print "InvShiftRows\n========="
     decipheredText = invShiftRows(decipheredText)
     decipheredText = transposeMatrix(decipheredText)  # Com no fem mixColumns, la transposem a ma
-    maskX2 = transposeMatrix(maskX2)
     for i in range(4):
         for j in range(4):
-            print str(hex(decipheredText[i][j]))
+            print str(hex(decipheredText[i][j] ^ maskX1[i][j]))
     print "InvSub Bytes\n========="
     for i in range(4):
         for j in range(4):
@@ -645,7 +642,7 @@ def decipher(key, keyLength):
     for i in range(4):
         for j in range(4):
             decipheredText[i][j] = gf_mult(decipheredText[i][j], maskY[i * 4 + j])
-            maskXY.append(gf_mult(maskX[i * 4 + j], maskY[i * 4 + j]))
+            maskXY.append(gf_mult(maskX2[i][j], maskY[i * 4 + j]))
     invMaskY = []
     for i in range(4):
         for j in range(4):
@@ -657,7 +654,7 @@ def decipher(key, keyLength):
     aux = []
     for i in range(4):
         for j in range(4):
-            aux.append(gf_mult(maskX[i * 4 + j], invMaskY[i * 4 + j]))
+            aux.append(gf_mult(maskX2[i][j], invMaskY[i * 4 + j]))
     for i in range(4):
         for j in range(4):
             decipheredText[i][j] = decipheredText[i][j] ^ (aux[i * 4 + j])
@@ -666,7 +663,7 @@ def decipher(key, keyLength):
             decipheredText[i][j] = gf_mult(decipheredText[i][j], maskY[i * 4 + j])
     for i in range(4):
         for j in range(4):
-            print str(hex(decipheredText[i][j]))
+            print str(hex(decipheredText[i][j] ^ maskX2[i][j]))
 
     lastRoundKeyBlock = key[0:16]
     res = []
