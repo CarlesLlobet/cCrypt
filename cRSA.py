@@ -8,8 +8,11 @@ from __builtin__ import bytearray
 plainText = 123456789
 bitlenght = 1024
 
+counterSqrts = 0
+counterProducts = 0
+
 def printUsage():
-    print "Usage: \n'python cRSA.py [-h/--help]' to print this Usage\n'python cRSA.py [l2r/r2l/slidingWindows/ladder]' to cipher and decipher test plaintext"
+    print "Usage: \n'python cRSA.py [-h/--help]' to print this Usage\n'python cRSA.py [l2r/r2l/slidingWindow/ladder/kary]' to cipher and decipher test plaintext"
     exit()
 
 def listToMatrix(byte):
@@ -111,11 +114,16 @@ def keyGeneration():
 
 def l2r(m, e, n):
     # c = (m ^ e) % n
+    global counterSqrts
+    global counterProducts
+
     A = 1
     for i in range(e.bit_length()):
         A = A * A
+        counterSqrts += 1
         if bin(e)[i] == str(1):
             A = A * m
+            counterProducts += 1
 
         A = A % n
 
@@ -123,11 +131,16 @@ def l2r(m, e, n):
 
 def r2l(m, e, n):
     # c = (m ^ e) % n
+    global counterSqrts
+    global counterProducts
+
     A = 1
     for i in reversed(range(e.bit_length())):
         if bin(e)[i] == str(1):
             A = A * m
+            counterProducts += 1
         m = m * m
+        counterSqrts += 1
 
         m = m % n
         A = A % n
@@ -135,29 +148,68 @@ def r2l(m, e, n):
     return A
 
 def monLadder(m, e, n):
+    global counterSqrts
+    global counterProducts
+
     A = m
     B = m*m
+    counterSqrts += 1
 
     B = B % n
 
     for i in range(1,e.bit_length()):
         if bin(e).lstrip('0b')[i] == str(1):
             A = A*B
+            counterProducts += 1
             B = B*B
+            counterSqrts += 1
 
             A = A % n
             B = B % n
         if bin(e).lstrip('0b')[i] == str(0):
             B = A*B
+            counterProducts += 1
             A = A*A
+            counterSqrts += 1
 
             A = A % n
             B = B % n
 
     return A
 
+def findBezoutCoef(a, b):
+    """
+        Returns a list `result` of size 3 where:
+        Referring to the equation ax + by = gcd(a, b)
+            result[0] is gcd(a, b)
+            result[1] is x
+            result[2] is y
+        """
+    s = 0;
+    old_s = 1
+    t = 1;
+    old_t = 0
+    r = b;
+    old_r = a
+
+    while r != 0:
+        quotient = old_r / r
+        # This is a pythonic way to swap numbers
+        # See the same part in C++ implementation below to know more
+        old_r, r = r, old_r - quotient * r
+        old_s, s = s, old_s - quotient * s
+        old_t, t = t, old_t - quotient * t
+    return [old_r, old_s, old_t]
+
 def monProduct(a, b, n):
     # Calculate n1 so that (r)(r^-1) - n*n1 = 1
+    # r = 2^k where 2^k-1 < n < 2^k
+    r = 2
+    while r < n:
+        r = r * 2
+    gcd, r1, n1 = findBezoutCoef(r,n)
+
+    n1 = -n1
 
     t = a * b
     m = t * n1 % r
@@ -166,12 +218,69 @@ def monProduct(a, b, n):
         u = u - n
     return u
 
-def slidingWindows(m, e, n):
-    return None
+def kary(m, e, n, k=3):
+    global counterSqrts
+    global counterProducts
 
-def kary(m, e, n):
-    return None
+    j = 2 ** k
+    #Afegim 0 al final si no te el # de grups bo
+    g = bin(e).lstrip('0b')
+    while (len(g) % k) != 0:
+        g = g.zfill(len(g)+1)
 
+    g2 = []
+    for i in range(0, len(g), k):
+        aux = ""
+        for y in range(k):
+            aux += str(g[i+y])
+        g2.append(m**int(aux,2))
+
+    A = g2[0]
+    for i in range(1, len(g2)):
+        A = (A**j) * (g2[i])
+        counterProducts += 1
+        A = A % n
+
+    return A
+
+def slidingWindow(m, e, n, k=3):
+    global counterSqrts
+    global counterProducts
+
+    j = 2 ** k
+
+    if e == 0:
+        g = "0"
+    else:
+        g = bin(e).lstrip('0b')
+
+    i = len(g)-1
+    g2 = []
+    while i > -1:
+        if str(g[i]) == str(0):
+            g2.append(int(0))
+            i -= 1
+        else:
+            aux = ""
+            for y in range(k):
+                if i-y > -1:
+                    aux += str(g[i - y])
+            i -= k
+            g2.append(m ** int(aux[::-1], 2) % n)
+
+    g2 = list(reversed(g2))
+    A = g2[0]
+    for i in range(1, len(g2)):
+        if g2[i] == 0:
+            A = A*A
+            counterSqrts += 1
+            A = A % n
+        else:
+            A = (A ** j) * (g2[i])
+            counterProducts += 1
+            A = A % n
+    if A == 0: return 1
+    return A
 
 ### MAIN ###
 args = sys.argv[1:]
@@ -182,7 +291,7 @@ if len(args) != 1:
 else:
     if str(args[0]) == "-h" or str(args[0]) == "--help":
         printUsage()
-    if str(args[0]) == "l2r" or str(args[0]) == "r2l" or str(args[0]) == "slidingWindows" or str(args[0]) == "ladder" or str(args[0]) == "kary":
+    if str(args[0]) == "l2r" or str(args[0]) == "r2l" or str(args[0]) == "slidingWindow" or str(args[0]) == "ladder" or str(args[0]) == "kary":
         print "Key Generation\n========="
         p, q, n, e, d = keyGeneration()
         print "p = " + str(p) + "\n"
@@ -196,13 +305,6 @@ else:
         print "d = " + str(d) + "\n"
         print "d has " + str(len(bin(d))) + " bits\n"
 
-        print "Montgomery product\n========="
-        a = 13
-        b = 17
-        n = 41
-
-        print "Montgomery product of 13*17 mod 41 is " + str(monProduct(a, b, n)) + "\n"
-
         # cipheredText = (plainText ^ e) % n
         # decipheredText = (cipheredText ^ d) % n
         if str(args[0]) == "l2r":
@@ -211,7 +313,11 @@ else:
             print "Ciphered Text is " + str(cipheredText)
 
             decipheredText = l2r(cipheredText,d,n)
-            print "Deciphered Text is " + str(decipheredText)
+            print "Deciphered Text is " + str(decipheredText) + "\n"
+
+            print "Products done: " + str(counterProducts) + "\n"
+            print "Squareds done: " + str(counterSqrts) + "\n"
+            print "Hope: " + str((counterProducts+counterSqrts)/float(len(bin(e))))
 
         elif str(args[0]) == "r2l":
             print "Right to Left\n========="
@@ -219,28 +325,48 @@ else:
             print "Ciphered Text is " + str(cipheredText)
 
             decipheredText = r2l(cipheredText, d, n)
-            print "Deciphered Text is " + str(decipheredText)
-        elif str(args[0]) == "slidingWindows":
+            print "Deciphered Text is " + str(decipheredText) + "\n"
+
+            print "Products done: " + str(counterProducts) + "\n"
+            print "Squareds done: " + str(counterSqrts) + "\n"
+            print "Hope: " + str((counterProducts+counterSqrts)/float(len(bin(e))))
+
+        elif str(args[0]) == "slidingWindow":
             print "Sliding Windows\n========="
-            cipheredText = slidingWindows(plainText, e, n)
+            cipheredText = slidingWindow(plainText, e, n)
             print "Ciphered Text is " + str(cipheredText)
 
-            decipheredText = slidingWindows(cipheredText, d, n)
-            print "Deciphered Text is " + str(decipheredText)
+            decipheredText = slidingWindow(cipheredText, d, n)
+            print "Deciphered Text is " + str(decipheredText) + "\n"
+
+            print "Products done: " + str(counterProducts) + "\n"
+            print "Squareds done: " + str(counterSqrts) + "\n"
+            print "Hope: " + str((counterProducts+counterSqrts)/float(len(bin(e))))
+
         elif str(args[0]) == "ladder":
             print "Montgomery Ladder\n========="
             cipheredText = monLadder(plainText, e, n)
             print "Ciphered Text is " + str(cipheredText)
 
             decipheredText = monLadder(cipheredText, d, n)
-            print "Deciphered Text is " + str(decipheredText)
+            print "Deciphered Text is " + str(decipheredText) + "\n"
+
+            print "Products done: " + str(counterProducts) + "\n"
+            print "Squareds done: " + str(counterSqrts) + "\n"
+            print "Hope: " + str((counterProducts+counterSqrts)/float(len(bin(e))))
+
         elif str(args[0]) == "kary":
             print "K-ary\n========="
             cipheredText = kary(plainText, e, n)
             print "Ciphered Text is " + str(cipheredText)
 
             decipheredText = kary(cipheredText, d, n)
-            print "Deciphered Text is " + str(decipheredText)
+            print "Deciphered Text is " + str(decipheredText) + "\n"
+
+            print "Products done: " + str(counterProducts) + "\n"
+            print "Squareds done: " + str(counterSqrts) + "\n"
+            print "Hope: " + str((counterProducts+counterSqrts)/float(len(bin(e))))
+
     else:
         print "ERROR: First argument must be a valid exponentiation method or -h/--help"
         printUsage()
