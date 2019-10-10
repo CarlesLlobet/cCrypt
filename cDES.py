@@ -51,7 +51,7 @@ s8 = [[13, 2, 8, 4, 6, 15, 11, 1, 10, 9, 3, 14, 5, 0, 12, 7],
 
 
 def printUsage():
-    print "Usage: \n'python cDES.py [-h/--help]' to print this Usage\n'python cDES.py [N]' to cipher and decipher test plaintext"
+    print("Usage: \n'python cDES.py [-h/--help]' to print this Usage\n'python cDES.py [N]' to cipher and decipher test plaintext")
     exit()
 
 
@@ -120,7 +120,7 @@ def sBOX(chunk, s):
     elif s == 7:
         chunk = bin(s8[i][j]).lstrip('0b').zfill(4)
     else:
-        print "Wrong s"
+        print("Wrong s")
         exit()
 
     return chunk
@@ -135,54 +135,54 @@ def feistelFunction(block, subKey):
             block[24] + block[25] + block[26] + block[27] + block[28] + block[27] + block[28] + block[29] + block[30] + \
             block[31] + block[0]
 
-    print "Expansion: " + block
+    print("Expansion: " + block)
 
     # Key Mixing
     input = bin(int(block, 2) ^ int(subKey, 2)).lstrip('0b').zfill(48)
 
-    print "Key Mixing: " + input
+    print("Key Mixing: " + input)
 
     # Substitution
     res = ""
     for i in range(0, len(input), 6):
         res += sBOX(input[i:i + 6], i / 6)
 
-    print "Sbox: " + res
+    print("Sbox: " + res)
 
     # Permutation
     res = res[15] + res[6] + res[19] + res[20] + res[28] + res[11] + res[27] + res[16] + res[0] + res[14] + res[22] + \
           res[25] + res[4] + res[17] + res[30] + res[9] + res[1] + res[7] + res[23] + res[13] + res[31] + res[26] + res[
               2] + res[8] + res[18] + res[12] + res[29] + res[5] + res[21] + res[10] + res[3] + res[24]
 
-    print "Permutation: " + res
+    print("Permutation: " + res)
 
     return res
 
 
 def cipher(key):
-    print "Ciphering: Initial Permutation\n========="
+    print("Ciphering: Initial Permutation\n=========")
     cipheredText = initPermute(plainText)
 
     L = cipheredText[0:32]
     R = cipheredText[32:64]
 
-    print "L: " + L
-    print "R: " + R
+    print("L: " + L)
+    print("R: " + R)
 
     for r in range(15):
-        print "Ciphering: Round " + str(r) + "\n========="
+        print("Ciphering: Round " + str(r) + "\n=========")
         A = R
         R = bin(int(L, 2) ^ int(feistelFunction(R, key[48 * r:(48 * r) + 48]), 2)).lstrip('0b').zfill(32)
         L = A
 
-        print "L: " + L
-        print "R: " + R
+        print("L: " + L)
+        print("R: " + R)
 
-    print "Ciphering: Last Round\n========="
+    print("Ciphering: Last Round\n=========")
     L = bin(int(L, 2) ^ int(feistelFunction(R, key[-48:]), 2)).lstrip('0b').zfill(32)
 
-    print "L: " + L
-    print "R: " + R
+    print("L: " + L)
+    print("R: " + R)
 
     cipheredText = L + R
 
@@ -191,28 +191,28 @@ def cipher(key):
     return cipheredText
 
 def decipher(key):
-    print "Deciphering: Initial Permutation\n========="
+    print("Deciphering: Initial Permutation\n=========")
     decipheredText = initPermute(expectedResult)
 
     L = decipheredText[0:32]
     R = decipheredText[32:64]
 
-    print "L: " + L
-    print "R: " + R
+    print("L: " + L)
+    print("R: " + R)
 
     for r in range(15):
-        print "Deciphering: Round " + str(r) + "\n========="
+        print("Deciphering: Round " + str(r) + "\n=========")
         A = R
         R = bin(int(L, 2) ^ int(feistelFunction(R, key[768-(48*r)-48:768-(48*r)]), 2)).lstrip('0b').zfill(32)
         L = A
-        print "L: " + L
-        print "R: " + R
+        print("L: " + L)
+        print("R: " + R)
 
-    print "Deciphering: Last Round\n========="
+    print("Deciphering: Last Round\n=========")
     L = bin(int(L, 2) ^ int(feistelFunction(R, key[:48]), 2)).lstrip('0b').zfill(32)
 
-    print "L: " + L
-    print "R: " + R
+    print("L: " + L)
+    print("R: " + R)
 
     decipheredText = L + R
 
@@ -236,7 +236,7 @@ def keyExpansion():
                   5] + keyBits[60] + keyBits[52] + keyBits[44] + keyBits[36] + keyBits[28] + keyBits[20] + keyBits[
                   12] + keyBits[4] + keyBits[27] + keyBits[19] + keyBits[11] + keyBits[3]
 
-    # print keyBits
+    # print(keyBits)
 
     LK = keyBits[0:28]
     RK = keyBits[28:56]
@@ -274,34 +274,34 @@ def keyExpansion():
 args = sys.argv[1:]
 
 if len(args) != 1:
-    print "ERROR: 1 argument required"
+    print("ERROR: 1 argument required")
     printUsage()
 else:
     if str(args[0]) == "-h" or str(args[0]) == "--help":
         printUsage()
     elif str(args[0]) == "N":
-        print "Arguments correctly provided"
+        print("Arguments correctly provided")
         keyExpanded = keyExpansion()
         if(keyExpanded == expectedExpandedKey):
-            print "KeyExpansion correcta"
+            print("KeyExpansion correcta")
         else:
-            print "KeyExpansion incorrecta"
+            print("KeyExpansion incorrecta")
 
         cipheredText = cipher(keyExpanded)
         hexCipheredText = []
         for i in range(0, len(cipheredText),8):
             hexCipheredText.append(hex(int(cipheredText[i:i+8],2)).rstrip('L'))
 
-        print "Ciphered Text is: "
-        print str(hexCipheredText)
+        print("Ciphered Text is: ")
+        print(str(hexCipheredText))
 
         decipheredText = decipher(keyExpanded)
         hexDecipheredText = []
         for i in range(0, len(decipheredText), 8):
             hexDecipheredText.append(hex(int(decipheredText[i:i + 8], 2)).rstrip('L'))
 
-        print "Deciphered Text is: "
-        print str(hexDecipheredText)
+        print("Deciphered Text is: ")
+        print(str(hexDecipheredText))
     else:
-        print "ERROR: First argument must be a valid type or -h/--help"
+        print("ERROR: First argument must be a valid type or -h/--help")
         printUsage()

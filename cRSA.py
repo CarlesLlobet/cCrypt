@@ -12,7 +12,7 @@ counterSqrts = 0
 counterProducts = 0
 
 def printUsage():
-    print "Usage: \n'python cRSA.py [-h/--help]' to print this Usage\n'python cRSA.py [l2r/r2l/slidingWindow/ladder/kary/all]' to cipher and decipher test plaintext"
+    print("Usage: \n'python cRSA.py [-h/--help]' to print this Usage\n'python cRSA.py [l2r/r2l/slidingWindow/ladder/kary/all]' to cipher and decipher test plaintext")
     exit()
 
 def listToMatrix(byte):
@@ -289,150 +289,150 @@ def slidingWindow(m, e, n, k=3):
 args = sys.argv[1:]
 
 if len(args) != 1:
-    print "ERROR: 1 argument required"
+    print("ERROR: 1 argument required")
     printUsage()
 else:
     if str(args[0]) == "-h" or str(args[0]) == "--help":
         printUsage()
     if str(args[0]) == "l2r" or str(args[0]) == "r2l" or str(args[0]) == "slidingWindow" or str(args[0]) == "ladder" or str(args[0]) == "kary" or str(args[0]) == "all":
-        print "Key Generation\n========="
+        print("Key Generation\n=========")
         p, q, n, e, d = keyGeneration()
-        print "p = " + str(p) + "\n"
-        print "p has " + str(len(bin(p))) + " bits\n"
-        print "q = " + str(q) + "\n"
-        print "q has " + str(len(bin(q))) + " bits\n"
-        print "n = " + str(n) + "\n"
-        print "n has " + str(len(bin(n))) + " bits\n"
-        print "e = " + str(e) + "\n"
-        print "e has " + str(len(bin(e))) + " bits\n"
-        print "d = " + str(d) + "\n"
-        print "d has " + str(len(bin(d))) + " bits\n"
+        print("p = " + str(p) + "\n")
+        print("p has " + str(len(bin(p))) + " bits\n")
+        print("q = " + str(q) + "\n")
+        print("q has " + str(len(bin(q))) + " bits\n")
+        print("n = " + str(n) + "\n")
+        print("n has " + str(len(bin(n))) + " bits\n")
+        print("e = " + str(e) + "\n")
+        print("e has " + str(len(bin(e))) + " bits\n")
+        print("d = " + str(d) + "\n")
+        print("d has " + str(len(bin(d))) + " bits\n")
 
         # cipheredText = (plainText ^ e) % n
         # decipheredText = (cipheredText ^ d) % n
         if str(args[0]) == "l2r":
-            print "Left to Right\n========="
+            print("Left to Right\n=========")
             cipheredText = l2r(plainText,e,n)
-            print "Ciphered Text is " + str(cipheredText)
+            print("Ciphered Text is " + str(cipheredText))
 
             decipheredText = l2r(cipheredText,d,n)
-            print "Deciphered Text is " + str(decipheredText) + "\n"
+            print("Deciphered Text is " + str(decipheredText) + "\n")
 
-            print "Products done: " + str(counterProducts) + "\n"
-            print "Squareds done: " + str(counterSqrts) + "\n"
-            print "Hope: " + str((counterProducts+counterSqrts)/float(len(bin(e))))
+            print("Products done: " + str(counterProducts) + "\n")
+            print("Squareds done: " + str(counterSqrts) + "\n")
+            print("Hope: " + str((counterProducts+counterSqrts)/float(len(bin(e)))))
 
         elif str(args[0]) == "r2l":
-            print "Right to Left\n========="
+            print("Right to Left\n=========")
             cipheredText = r2l(plainText, e, n)
-            print "Ciphered Text is " + str(cipheredText)
+            print("Ciphered Text is " + str(cipheredText))
 
             decipheredText = r2l(cipheredText, d, n)
-            print "Deciphered Text is " + str(decipheredText) + "\n"
+            print("Deciphered Text is " + str(decipheredText) + "\n")
 
-            print "Products done: " + str(counterProducts) + "\n"
-            print "Squareds done: " + str(counterSqrts) + "\n"
-            print "Hope: " + str((counterProducts+counterSqrts)/float(len(bin(e))))
+            print("Products done: " + str(counterProducts) + "\n")
+            print("Squareds done: " + str(counterSqrts) + "\n")
+            print("Hope: " + str((counterProducts+counterSqrts)/float(len(bin(e)))))
 
         elif str(args[0]) == "slidingWindow":
-            print "Sliding Windows\n========="
+            print("Sliding Windows\n=========")
             cipheredText = slidingWindow(plainText, e, n)
-            print "Ciphered Text is " + str(cipheredText)
+            print("Ciphered Text is " + str(cipheredText))
 
             decipheredText = slidingWindow(cipheredText, d, n)
-            print "Deciphered Text is " + str(decipheredText) + "\n"
+            print("Deciphered Text is " + str(decipheredText) + "\n")
 
-            print "Products done: " + str(counterProducts) + "\n"
-            print "Squareds done: " + str(counterSqrts) + "\n"
-            print "Hope: " + str((counterProducts+counterSqrts)/float(len(bin(e))))
+            print("Products done: " + str(counterProducts) + "\n")
+            print("Squareds done: " + str(counterSqrts) + "\n")
+            print("Hope: " + str((counterProducts+counterSqrts)/float(len(bin(e)))))
 
         elif str(args[0]) == "ladder":
-            print "Montgomery Ladder\n========="
+            print("Montgomery Ladder\n=========")
             cipheredText = monLadder(plainText, e, n)
-            print "Ciphered Text is " + str(cipheredText)
+            print("Ciphered Text is " + str(cipheredText))
 
             decipheredText = monLadder(cipheredText, d, n)
-            print "Deciphered Text is " + str(decipheredText) + "\n"
+            print("Deciphered Text is " + str(decipheredText) + "\n")
 
-            print "Products done: " + str(counterProducts) + "\n"
-            print "Squareds done: " + str(counterSqrts) + "\n"
-            print "Hope: " + str((counterProducts+counterSqrts)/float(len(bin(e))))
+            print("Products done: " + str(counterProducts) + "\n")
+            print("Squareds done: " + str(counterSqrts) + "\n")
+            print("Hope: " + str((counterProducts+counterSqrts)/float(len(bin(e)))))
 
         elif str(args[0]) == "kary":
-            print "K-ary\n========="
+            print("K-ary\n=========")
             cipheredText = kary(plainText, e, n)
-            print "Ciphered Text is " + str(cipheredText)
+            print("Ciphered Text is " + str(cipheredText))
 
             decipheredText = kary(cipheredText, d, n)
-            print "Deciphered Text is " + str(decipheredText) + "\n"
+            print("Deciphered Text is " + str(decipheredText) + "\n")
 
-            print "Products done: " + str(counterProducts) + "\n"
-            print "Squareds done: " + str(counterSqrts) + "\n"
-            print "Hope: " + str((counterProducts+counterSqrts)/float(len(bin(e))))
+            print("Products done: " + str(counterProducts) + "\n")
+            print("Squareds done: " + str(counterSqrts) + "\n")
+            print("Hope: " + str((counterProducts+counterSqrts)/float(len(bin(e)))))
         elif str(args[0]) == "all":
-            print "Left to Right\n========="
+            print("Left to Right\n=========")
             cipheredText = l2r(plainText,e,n)
-            print "Ciphered Text is " + str(cipheredText)
+            print("Ciphered Text is " + str(cipheredText))
 
             decipheredText = l2r(cipheredText,d,n)
-            print "Deciphered Text is " + str(decipheredText) + "\n"
+            print("Deciphered Text is " + str(decipheredText) + "\n")
 
-            print "Products done: " + str(counterProducts) + "\n"
-            print "Squareds done: " + str(counterSqrts) + "\n"
-            print "Hope: " + str((counterProducts+counterSqrts)/float(len(bin(e))))
+            print("Products done: " + str(counterProducts) + "\n")
+            print("Squareds done: " + str(counterSqrts) + "\n")
+            print("Hope: " + str((counterProducts+counterSqrts)/float(len(bin(e)))))
             counterProducts = 0
             counterSqrts = 0
         
-            print "Right to Left\n========="
+            print("Right to Left\n=========")
             cipheredText = r2l(plainText, e, n)
-            print "Ciphered Text is " + str(cipheredText)
+            print("Ciphered Text is " + str(cipheredText))
 
             decipheredText = r2l(cipheredText, d, n)
-            print "Deciphered Text is " + str(decipheredText) + "\n"
+            print("Deciphered Text is " + str(decipheredText) + "\n")
 
-            print "Products done: " + str(counterProducts) + "\n"
-            print "Squareds done: " + str(counterSqrts) + "\n"
-            print "Hope: " + str((counterProducts+counterSqrts)/float(len(bin(e))))
+            print("Products done: " + str(counterProducts) + "\n")
+            print("Squareds done: " + str(counterSqrts) + "\n")
+            print("Hope: " + str((counterProducts+counterSqrts)/float(len(bin(e)))))
             counterProducts = 0
             counterSqrts = 0
         
-            print "Sliding Windows\n========="
+            print("Sliding Windows\n=========")
             cipheredText = slidingWindow(plainText, e, n)
-            print "Ciphered Text is " + str(cipheredText)
+            print("Ciphered Text is " + str(cipheredText))
 
             decipheredText = slidingWindow(cipheredText, d, n)
-            print "Deciphered Text is " + str(decipheredText) + "\n"
+            print("Deciphered Text is " + str(decipheredText) + "\n")
 
-            print "Products done: " + str(counterProducts) + "\n"
-            print "Squareds done: " + str(counterSqrts) + "\n"
-            print "Hope: " + str((counterProducts+counterSqrts)/float(len(bin(e))))
+            print("Products done: " + str(counterProducts) + "\n")
+            print("Squareds done: " + str(counterSqrts) + "\n")
+            print("Hope: " + str((counterProducts+counterSqrts)/float(len(bin(e)))))
             counterProducts = 0
             counterSqrts = 0
         
-            print "Montgomery Ladder\n========="
+            print("Montgomery Ladder\n=========")
             cipheredText = monLadder(plainText, e, n)
-            print "Ciphered Text is " + str(cipheredText)
+            print("Ciphered Text is " + str(cipheredText))
 
             decipheredText = monLadder(cipheredText, d, n)
-            print "Deciphered Text is " + str(decipheredText) + "\n"
+            print("Deciphered Text is " + str(decipheredText) + "\n")
 
-            print "Products done: " + str(counterProducts) + "\n"
-            print "Squareds done: " + str(counterSqrts) + "\n"
-            print "Hope: " + str((counterProducts+counterSqrts)/float(len(bin(e))))
+            print("Products done: " + str(counterProducts) + "\n")
+            print("Squareds done: " + str(counterSqrts) + "\n")
+            print("Hope: " + str((counterProducts+counterSqrts)/float(len(bin(e)))))
             counterProducts = 0
             counterSqrts = 0
         
-            print "K-ary\n========="
+            print("K-ary\n=========")
             cipheredText = kary(plainText, e, n)
-            print "Ciphered Text is " + str(cipheredText)
+            print("Ciphered Text is " + str(cipheredText))
 
             decipheredText = kary(cipheredText, d, n)
-            print "Deciphered Text is " + str(decipheredText) + "\n"
+            print("Deciphered Text is " + str(decipheredText) + "\n")
 
-            print "Products done: " + str(counterProducts) + "\n"
-            print "Squareds done: " + str(counterSqrts) + "\n"
-            print "Hope: " + str((counterProducts+counterSqrts)/float(len(bin(e))))
+            print("Products done: " + str(counterProducts) + "\n")
+            print("Squareds done: " + str(counterSqrts) + "\n")
+            print("Hope: " + str((counterProducts+counterSqrts)/float(len(bin(e)))))
 
     else:
-        print "ERROR: First argument must be a valid exponentiation method or -h/--help"
+        print("ERROR: First argument must be a valid exponentiation method or -h/--help")
         printUsage()
