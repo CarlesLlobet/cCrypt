@@ -124,26 +124,24 @@ def determineSubKey(b, correct):
     k = []
 
     k.append(shiftedB[0] ^ correct[0])
-    k.append(shiftedB[1] ^ correct[13])
-    k.append(shiftedB[2] ^ correct[10])
+    k.append(shiftedB[4] ^ correct[1])
+    k.append(shiftedB[8] ^ correct[2])
+    k.append(shiftedB[12] ^ correct[3])
+
+    k.append(shiftedB[7] ^ correct[4])
+    k.append(shiftedB[11] ^ correct[5])
+    k.append(shiftedB[15] ^ correct[6])
     k.append(shiftedB[3] ^ correct[7])
 
+    k.append(shiftedB[10] ^ correct[8])
+    k.append(shiftedB[14] ^ correct[9])
+    k.append(shiftedB[2] ^ correct[10])
+    k.append(shiftedB[6] ^ correct[11])
 
-    k.append(shiftedB[4] ^ correct[4])
-    k.append(shiftedB[5] ^ correct[1])
-    k.append(shiftedB[6] ^ correct[14])
-    k.append(shiftedB[7] ^ correct[11])
-
-    k.append(shiftedB[8] ^ correct[8])
-    k.append(shiftedB[9] ^ correct[5])
-    k.append(shiftedB[10] ^ correct[2])
-    k.append(shiftedB[11] ^ correct[15])
-
-    k.append(shiftedB[12] ^ correct[12])
-    k.append(shiftedB[13] ^ correct[9])
-    k.append(shiftedB[14] ^ correct[6])
-    k.append(shiftedB[15] ^ correct[3])
-
+    k.append(shiftedB[13] ^ correct[12])
+    k.append(shiftedB[1] ^ correct[13])
+    k.append(shiftedB[5] ^ correct[14])
+    k.append(shiftedB[9] ^ correct[15])
     return k
 
 def SL(B):
@@ -261,9 +259,95 @@ def chooseValues(candidates):
     print("Most repeated array is: " + str(max_item))
     return max_item
 
-def invKeyExpansion(subkey):
-    key = ""
-    return key
+def rotate(byte):
+    a = byte[0]
+    for i in range(3):
+        byte[i] = byte[i + 1]
+    byte[3] = a
+    return byte
+
+
+def rcon(byte):
+    c = 1
+    if byte == 0:
+        return 0
+    while byte != 1:
+        b = c & 0x80
+        c = (c * 2) & 0xFF
+        if b == 0x80:
+            c ^= 0x1B
+        byte -= 1
+    return c
+
+def invKeyExpansion(key, keyLength):
+    resultKey = []
+    if keyLength == 128:
+        # White
+        resultKey += key
+        c = 16
+        i = 1
+        t = [None] * 4
+        while (c < 176):
+            # Green
+            for a in range(4):
+                t[a] = resultKey[a + c - 4]
+            if (c % 16 == 0):
+                rotate(t)
+                for a in range(4):
+                    t[a] = subBytes(t[a])
+                t[0] ^= rcon(i)
+                i += 1
+            # Red
+            for a in range(4):
+                resultKey.append(resultKey[c - 16] ^ t[a])
+                c += 1
+        return resultKey
+    if keyLength == 192:
+        # White
+        resultKey += key
+        c = 24
+        i = 1
+        t = [None] * 4
+        while (c < 208):
+            # Green
+            for a in range(4):
+                t[a] = resultKey[a + c - 4]
+            if (c % 24 == 0):
+                rotate(t)
+                for a in range(4):
+                    t[a] = subBytes(t[a])
+                t[0] ^= rcon(i)
+                i += 1
+            # Red
+            for a in range(4):
+                resultKey.append(resultKey[c - 24] ^ t[a])
+                c += 1
+        return resultKey
+    if keyLength == 256:
+        # White
+        resultKey += key
+        c = 32
+        i = 1
+        t = [None] * 4
+        while (c < 240):
+            # Green
+            for a in range(4):
+                t[a] = resultKey[a + c - 4]
+            if (c % 32 == 0):
+                rotate(t)
+                for a in range(4):
+                    t[a] = subBytes(t[a])
+                t[0] ^= rcon(i)
+                i += 1
+            # Black
+            elif (c % 32 == 16):
+                for a in range(4):
+                    t[a] = subBytes(t[a])
+            # Red
+            for a in range(4):
+                resultKey.append(resultKey[c - 32] ^ t[a])
+                c += 1
+        return resultKey
 
 ### MAIN ###
 args = sys.argv[1:]
