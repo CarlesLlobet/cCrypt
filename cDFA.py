@@ -162,10 +162,12 @@ def findCandidates(column):
     if checkFault(column[0]) == 1:
         for eout in column:
             for ein in range(256):
+                doubleEin = multiplyGalois(2,ein)
+                tripleEin = multiplyGalois(3,ein)
                 #print("Ein: " + str(ein))
                 for b1 in range(256):
                     #print("B1: " + str(b1))
-                    if subBytes(b1 ^ multiplyGalois(2,ein)) == (subBytes(b1) ^ eout[0]):
+                    if subBytes(b1 ^ doubleEin) == (subBytes(b1) ^ eout[0]):
                         for b2 in range(256):
                             #print("B2: " + str(b2))
                             if subBytes(b2 ^ ein) == (subBytes(b2) ^ eout[13]):
@@ -174,20 +176,22 @@ def findCandidates(column):
                                     if subBytes(b3 ^ ein) == (subBytes(b3) ^ eout[10]):
                                         for b4 in range(256):
                                             #print("B4: " + str(b4))
-                                            if subBytes(b4 ^ multiplyGalois(3,ein)) == (subBytes(b4) ^ eout[7]):
+                                            if subBytes(b4 ^ tripleEin) == (subBytes(b4) ^ eout[7]):
                                                 candidates.append([b1,b2,b3,b4])
         print("Candidates: " + str(candidates))
         return candidates
     elif checkFault(column[0]) == 2:
         for eout in column:
             for ein in range(256):
+                doubleEin = multiplyGalois(2,ein)
+                tripleEin = multiplyGalois(3,ein)
                 #print("Ein: " + str(ein))
                 for b1 in range(256):
                     #print("B1: " + str(b1))
-                    if subBytes(b1 ^ multiplyGalois(3,ein)) == (subBytes(b1) ^ eout[4]):
+                    if subBytes(b1 ^ tripleEin) == (subBytes(b1) ^ eout[4]):
                         for b2 in range(256):
                             #print("B2: " + str(b2))
-                            if subBytes(b2 ^ multiplyGalois(2,ein)) == (subBytes(b2) ^ eout[1]):
+                            if subBytes(b2 ^ doubleEin) == (subBytes(b2) ^ eout[1]):
                                 for b3 in range(256):
                                     #print("B3: " + str(b3))
                                     if subBytes(b3 ^ ein) == (subBytes(b3) ^ eout[14]):
@@ -200,16 +204,18 @@ def findCandidates(column):
     elif checkFault(column[0]) == 3:
         for eout in column:
             for ein in range(256):
+                doubleEin = multiplyGalois(2,ein)
+                tripleEin = multiplyGalois(3,ein)
                 #print("Ein: " + str(ein))
                 for b1 in range(256):
                     #print("B1: " + str(b1))
                     if subBytes(b1 ^ ein) == (subBytes(b1) ^ eout[8]):
                         for b2 in range(256):
                             #print("B2: " + str(b2))
-                            if subBytes(b2 ^ multiplyGalois(3,ein)) == (subBytes(b2) ^ eout[5]):
+                            if subBytes(b2 ^ tripleEin) == (subBytes(b2) ^ eout[5]):
                                 for b3 in range(256):
                                     #print("B3: " + str(b3))
-                                    if subBytes(b3 ^ multiplyGalois(2,ein)) == (subBytes(b3) ^ eout[2]):
+                                    if subBytes(b3 ^ doubleEin) == (subBytes(b3) ^ eout[2]):
                                         for b4 in range(256):
                                             #print("B4: " + str(b4))
                                             if subBytes(b4 ^ ein) == (subBytes(b4) ^ eout[15]):
@@ -219,8 +225,11 @@ def findCandidates(column):
     elif checkFault(column[0]) == 4:
         for eout in column:
             for ein in range(256):
+                doubleEin = multiplyGalois(2,ein)
+                tripleEin = multiplyGalois(3,ein)
                 #print("Ein: " + str(ein))
                 for b1 in range(256):
+                    
                     #print("B1: " + str(b1))
                     if subBytes(b1 ^ ein) == (subBytes(b1) ^ eout[12]):
                         for b2 in range(256):
@@ -228,10 +237,10 @@ def findCandidates(column):
                             if subBytes(b2 ^ ein) == (subBytes(b2) ^ eout[9]):
                                 for b3 in range(256):
                                     #print("B3: " + str(b3))
-                                    if subBytes(b3 ^ multiplyGalois(3,ein)) == (subBytes(b3) ^ eout[6]):
+                                    if subBytes(b3 ^ tripleEin) == (subBytes(b3) ^ eout[6]):
                                         for b4 in range(256):
                                             #print("B4: " + str(b4))
-                                            if subBytes(b4 ^ multiplyGalois(2,ein)) == (subBytes(b4) ^ eout[3]):
+                                            if subBytes(b4 ^ doubleEin) == (subBytes(b4) ^ eout[3]):
                                                 candidates.append([b1,b2,b3,b4])
         print("Candidates: " + str(candidates))
         return candidates
@@ -243,12 +252,14 @@ def chooseValues(candidates):
     max_i = 0
     cur_item = None
     max_item = None
+    total_max_lenght = 0
     for i, item in sorted(enumerate(candidates), key=lambda x: x[1]):
         if cur_item is None or cur_item != item:
             if cur_length > max_length or (cur_length == max_length and cur_i < max_i):
                 max_length = cur_length
                 max_i = cur_i
                 max_item = cur_item
+                total_max_lenght = max_length
             cur_length = 1
             cur_i = i
             cur_item = item
@@ -256,7 +267,7 @@ def chooseValues(candidates):
             cur_length += 1
     if cur_length > max_length or (cur_length == max_length and cur_i < max_i):
         return cur_item
-    print("Most repeated array is: " + str(max_item))
+    print("Most repeated array is: " + str(max_item) + " with " + str(total_max_lenght) + " repetitions.")
     return max_item
 
 def rotate(byte):
@@ -280,72 +291,88 @@ def rcon(byte):
     return c
 
 def invKeyExpansion(key, keyLength):
-    resultKey = []
     if keyLength == 128:
+        resultKey = [0] * 176
         # White
-        resultKey += key
-        c = 16
-        i = 1
+        for a in range(16):
+            resultKey[160+a] = key[a]
+        for b in resultKey:
+            print(str(hex(b)))
+        c = 159
+        i = 10
         t = [None] * 4
-        while (c < 176):
+        while (c > 0):
             # Green
+            # Save W[i-1] in t
             for a in range(4):
-                t[a] = resultKey[a + c - 4]
-            if (c % 16 == 0):
+                t[a] = resultKey[c + 12 - a]
+            # If its a green spot
+            if (((c-3) % 16) == 0):
+                # rotate w[i-1]
+                t = list(reversed(t))
                 rotate(t)
+                t = list(reversed(t))
+                # And SubBytes w[i-1]
                 for a in range(4):
                     t[a] = subBytes(t[a])
-                t[0] ^= rcon(i)
-                i += 1
-            # Red
+                # And xor it with rcon[i/Nk]
+                t[3] ^= rcon(i)
+                i -= 1
+            # Even if its red or green, you have to xor it with W[i-Nk]
             for a in range(4):
-                resultKey.append(resultKey[c - 16] ^ t[a])
-                c += 1
+                resultKey[c] = (resultKey[c + 16] ^ t[a])
+                c -= 1
         return resultKey
     if keyLength == 192:
+        resultKey = [0] * 208
         # White
         resultKey += key
-        c = 24
-        i = 1
+        c = 191
+        i = 12
         t = [None] * 4
-        while (c < 208):
+        while (c > 0):
             # Green
             for a in range(4):
-                t[a] = resultKey[a + c - 4]
-            if (c % 24 == 0):
+                t[a] = resultKey[c + 20 - a]
+            if (((c-3) % 24) == 0):
+                t = list(reversed(t))
                 rotate(t)
+                t = list(reversed(t))
                 for a in range(4):
                     t[a] = subBytes(t[a])
-                t[0] ^= rcon(i)
-                i += 1
+                t[3] ^= rcon(i)
+                i -= 1
             # Red
             for a in range(4):
-                resultKey.append(resultKey[c - 24] ^ t[a])
+                resultKey.append(resultKey[c + 24] ^ t[a])
                 c += 1
         return resultKey
     if keyLength == 256:
+        resultKey = [0] * 240
         # White
         resultKey += key
-        c = 32
-        i = 1
+        c = 223
+        i = 14
         t = [None] * 4
-        while (c < 240):
+        while (c > 0):
             # Green
             for a in range(4):
-                t[a] = resultKey[a + c - 4]
-            if (c % 32 == 0):
+                t[a] = resultKey[c + 28 - a]
+            if (((c-3) % 32) == 0):
+                t = list(reversed(t))
                 rotate(t)
+                t = list(reversed(t))
                 for a in range(4):
                     t[a] = subBytes(t[a])
-                t[0] ^= rcon(i)
-                i += 1
+                t[3] ^= rcon(i)
+                i -= 1
             # Black
-            elif (c % 32 == 16):
+            elif (((c-3) % 32) == 16):
                 for a in range(4):
                     t[a] = subBytes(t[a])
             # Red
             for a in range(4):
-                resultKey.append(resultKey[c - 32] ^ t[a])
+                resultKey.append(resultKey[c + 32] ^ t[a])
                 c += 1
         return resultKey
 
@@ -387,8 +414,8 @@ else:
                 for i in range(16):
                     correct[i] = int(correct[i],16)
 
-                print("Output to analyze is:")
                 '''
+                print("Output to analyze is:")
                 for c in correct:
                     print("Correct: " + str(hex(c)))
                 for index, value in enumerate(faults):
@@ -440,10 +467,15 @@ else:
                     for b in subkey:
                         print(str(hex(b)))
 
-                    key = invKeyExpansion(subkey)
+                    key = invKeyExpansion(subkey, keyLength)
+
+                    print("Key is:")
+                    for b in key[0:16]:
+                        print(str(hex(b)))
+
                 elif keyLength == 192:
-                    print("192 chosen")
+                    print("192 chosen but not supported yet")
                 elif keyLength == 256:
-                    print("256 chosen")
+                    print("256 chosen but not supported yet")
     else:
         printUsage()
