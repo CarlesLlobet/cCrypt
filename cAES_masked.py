@@ -712,8 +712,7 @@ def checkKeyExpanded(calculated, expected):
             # print("Calculated: " + str(hex(calculated[16*i+j])))
             if calculated[16 * i + j] != expected[16 * i + j]:
                 print("Error en la posicion " + str(i * 16 + j) + " fila " + str(i) + " i columna " + str(j))
-                print("El resultado deberia ser " + str(hex(expected[16 * i + j])) + " y no " + str()
-                    hex(calculated[16 * i + j])) + "\n"
+                print("El resultado deberia ser " + str(hex(expected[16 * i + j])) + " y no " + str(hex(calculated[16 * i + j])) + "\n")
                 res = False
     return res
 
