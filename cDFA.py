@@ -2,8 +2,6 @@
 import os
 import sys
 
-nRounds = {128: 10, 192: 12, 256: 14}
-
 affectedColumn1 = [1,0,0,0,0,0,0,1,0,0,1,0,0,1,0,0]
 affectedColumn2 = [0,1,0,0,1,0,0,0,0,0,0,1,0,0,1,0]
 affectedColumn3 = [0,0,1,0,0,1,0,0,1,0,0,0,0,0,0,1]
@@ -229,7 +227,7 @@ def findCandidates(column):
                 tripleEin = multiplyGalois(3,ein)
                 #print("Ein: " + str(ein))
                 for b1 in range(256):
-                    
+
                     #print("B1: " + str(b1))
                     if subBytes(b1 ^ ein) == (subBytes(b1) ^ eout[12]):
                         for b2 in range(256):
