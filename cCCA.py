@@ -27,6 +27,9 @@ def printUsage():
     print("Usage: \n'python cCCA.py [-h/--help]' to print this Usage\n'python cCCA.py tracesFolder' to attack the traces with CCA")
     exit()
 
+def column(matrix, i):
+    return [row[i] for row in matrix]
+
 def subBytes(byte):
     return sBox[byte]
 
@@ -55,6 +58,7 @@ else:
             else:
                 print("Arguments correctly provided")
                 data = []
+
                 r0 = []
                 r1 = []
                 r2 = []
@@ -65,8 +69,7 @@ else:
                 r8 = []
                 r9 = []
                 r10 = []
-                minFirst = -1
-                maxLast = -1
+                minLenght = -1
                 for file in os.listdir(path):
                     if os.path.isfile(os.path.join(path, file)):
                         print("File: " + str(file))
@@ -84,39 +87,9 @@ else:
                             for t in trace_reader:
                                 traces.append(t)
 
-                        r0aux = []
-                        r1aux = []
-                        r2aux = []
-                        r3aux = []
-                        r4aux = []
-                        r5aux = []
-                        r6aux = []
-                        r8aux = []
-                        r9aux = []
-                        r10aux = []
                         for i, t in enumerate(traces):
                             idx.append(i)
                             pcs.append(t["pc"])
-                            r0aux.append(t["r0"])
-                            r1aux.append(t["r1"])
-                            r2aux.append(t["r2"])
-                            r3aux.append(t["r3"])
-                            r4aux.append(t["r4"])
-                            r5aux.append(t["r5"])
-                            r6aux.append(t["r6"])
-                            r8aux.append(t["r8"])
-                            r9aux.append(t["r9"])
-                            r10aux.append(t["r10"])
-                        r0.append(r0aux)
-                        r1.append(r1aux)
-                        r2.append(r2aux)
-                        r3.append(r3aux)
-                        r4.append(r4aux)
-                        r5.append(r5aux)
-                        r6.append(r6aux)
-                        r8.append(r8aux)
-                        r9.append(r9aux)
-                        r10.append(r10aux)
 
                         counter = collections.Counter(pcs)
 
@@ -127,8 +100,6 @@ else:
 
                         pcR1 = min(auxR1)
                         firstR1 = pcs.index(pcR1)  ### PRINCIPI DE L'AES (R1 primer PC)
-                        if firstR1 < minFirst or minFirst == -1:
-                            minFirst = firstR1
                         print(str(firstR1))
                         lastR10 = len(pcs) - 1 - pcs[::-1].index(pcR1)  ### FINAL DE TOT L'AES (RONDA 10)
                         c = 0
@@ -142,11 +113,43 @@ else:
                                     c += 1
 
                         print(str(lastR1))
+                        if minLenght == -1 or minLenght > (lastR1-firstR1):
+                            minLenght = (lastR1-firstR1)
 
-                        if lastR1 > maxLast or maxLast == -1:
-                            maxLast = lastR1
+                        r0aux = []
+                        r1aux = []
+                        r2aux = []
+                        r3aux = []
+                        r4aux = []
+                        r5aux = []
+                        r6aux = []
+                        r8aux = []
+                        r9aux = []
+                        r10aux = []
+                        for t in traces[firstR1:lastR1]:
+                            r0aux.append(int(t["r0"]))
+                            r1aux.append(int(t["r1"]))
+                            r2aux.append(int(t["r2"]))
+                            r3aux.append(int(t["r3"]))
+                            r4aux.append(int(t["r4"]))
+                            r5aux.append(int(t["r5"]))
+                            r6aux.append(int(t["r6"]))
+                            r8aux.append(int(t["r8"]))
+                            r9aux.append(int(t["r9"]))
+                            r10aux.append(int(t["r10"]))
+                        r0.append(r0aux)
+                        r1.append(r1aux)
+                        r2.append(r2aux)
+                        r3.append(r3aux)
+                        r4.append(r4aux)
+                        r5.append(r5aux)
+                        r6.append(r6aux)
+                        r8.append(r8aux)
+                        r9.append(r9aux)
+                        r10.append(r10aux)
 
                         data.append([input,firstR1,lastR1])
+
                         '''
                         ### PRINT PLOTS ###
                         plt.plot(idx[firstR1:lastR1],pcs[firstR1:lastR1])
@@ -161,6 +164,7 @@ else:
                         plt.savefig(path+"plots/trace-"+input+"-"+output+".png", bbox_inches='tight')
                         plt.clf()
                         '''
+
                 print("Finished analyzing traces !")
 
                 correctKey = []
@@ -172,94 +176,71 @@ else:
                         for d in data:
                             inB1 = int(d[0][byte:byte + 2], 16)
                             outR1.append(subBytes(addRoundBitKey(inB1, key)))
-
-                        for trace in range(minFirst, maxLast):
-                            valuesr0 = []
-                            valuesr1 = []
-                            valuesr2 = []
-                            valuesr3 = []
-                            valuesr4 = []
-                            valuesr5 = []
-                            valuesr6 = []
-                            valuesr8 = []
-                            valuesr9 = []
-                            valuesr10 = []
-                            for i in range(len(data)):
-                                valuesr0.append(int(r0[i][trace]))
-                                valuesr1.append(int(r1[i][trace]))
-                                valuesr2.append(int(r2[i][trace]))
-                                valuesr3.append(int(r3[i][trace]))
-                                valuesr4.append(int(r4[i][trace]))
-                                valuesr5.append(int(r5[i][trace]))
-                                valuesr6.append(int(r6[i][trace]))
-                                valuesr8.append(int(r8[i][trace]))
-                                valuesr9.append(int(r9[i][trace]))
-                                valuesr10.append(int(r10[i][trace]))
-
+                        for trace in range(minLenght):
                             # Getting lines from output
-                            corrCoefR0 = np.corrcoef(outR1,valuesr0)[0][1]
+                            corrCoefR0 = np.corrcoef(outR1, column(r0, trace))[0][1]
                             if corrCoefR0 > 0.85 or corrCoefR0 < -0.85:
                                 print("Correct key for byte " + str(int(byte/2)) + " was found in register 0 and is: " + str(key))
                                 correctKey.append(key)
                                 break
-                            corrCoefR1 = np.corrcoef(outR1,valuesr1)[0][1]
+                            corrCoefR1 = np.corrcoef(outR1, column(r1, trace))[0][1]
                             if corrCoefR1 > 0.85 or corrCoefR1 < -0.85:
                                 print("Correct key for byte " + str(int(byte/2)) + " was found in register 1 and is: " + str(key))
                                 correctKey.append(key)
                                 break
-                            corrCoefR2 = np.corrcoef(outR1,valuesr2)[0][1]
+                            corrCoefR2 = np.corrcoef(outR1, column(r2, trace))[0][1]
                             if corrCoefR2 > 0.85 or corrCoefR2 < -0.85:
                                 print("Correct key for byte " + str(int(byte/2)) + " was found in register 2 and is: " + str(key))
                                 correctKey.append(key)
                                 break
-                            corrCoefR3 = np.corrcoef(outR1,valuesr3)[0][1]
+                            corrCoefR3 = np.corrcoef(outR1, column(r3, trace))[0][1]
                             if corrCoefR3 > 0.85 or corrCoefR3 < -0.85:
                                 print("Correct key for byte " + str(int(byte/2)) + " was found in register 3 and is: " + str(key))
                                 correctKey.append(key)
                                 break
-                            corrCoefR4 = np.corrcoef(outR1,valuesr4)[0][1]
+                            corrCoefR4 = np.corrcoef(outR1, column(r4, trace))[0][1]
                             if corrCoefR4 > 0.85 or corrCoefR4 < -0.85:
                                 print("Correct key for byte " + str(int(byte/2)) + " was found in register 4 and is: " + str(key))
                                 correctKey.append(key)
                                 break
-                            corrCoefR5 = np.corrcoef(outR1, valuesr5)[0][1]
+                            corrCoefR5 = np.corrcoef(outR1, column(r5, trace))[0][1]
                             if corrCoefR5 > 0.85 or corrCoefR5 < -0.85:
                                 print(
                                     "Correct key for byte " + str(byte / 2) + " was found in register 5 and is: " + str(
                                         key))
                                 correctKey.append(key)
                                 break
-                            corrCoefR6 = np.corrcoef(outR1, valuesr6)[0][1]
+                            corrCoefR6 = np.corrcoef(outR1, column(r6, trace))[0][1]
                             if corrCoefR6 > 0.85 or corrCoefR6 < -0.85:
                                 print(
                                     "Correct key for byte " + str(byte / 2) + " was found in register 6 and is: " + str(
                                         key))
                                 correctKey.append(key)
                                 break
-                            corrCoefR8 = np.corrcoef(outR1, valuesr8)[0][1]
+                            corrCoefR8 = np.corrcoef(outR1, column(r8, trace))[0][1]
                             if corrCoefR8 > 0.85 or corrCoefR8 < -0.85:
                                 print(
                                     "Correct key for byte " + str(byte / 2) + " was found in register 8 and is: " + str(
                                         key))
                                 correctKey.append(key)
                                 break
-                            corrCoefR9 = np.corrcoef(outR1, valuesr9)[0][1]
+                            corrCoefR9 = np.corrcoef(outR1, column(r9, trace))[0][1]
                             if corrCoefR9 > 0.85 or corrCoefR9 < -0.85:
                                 print(
                                     "Correct key for byte " + str(byte / 2) + " was found in register 9 and is: " + str(
                                         key))
                                 correctKey.append(key)
                                 break
-                            corrCoefR10 = np.corrcoef(outR1, valuesr10)[0][1]
+                            corrCoefR10 = np.corrcoef(outR1, column(r10, trace))[0][1]
                             if corrCoefR10 > 0.85 or corrCoefR10 < -0.85:
                                 print(
                                     "Correct key for byte " + str(byte / 2) + " was found in register 10 and is: " + str(
                                         key))
                                 correctKey.append(key)
                                 break
-                    else:
-                        continue
-                    break
+                        else:
+                            continue
+                        break
                 if len(correctKey) == 16:
                     print("Correct key found!: " + str(correctKey))
                 else:
