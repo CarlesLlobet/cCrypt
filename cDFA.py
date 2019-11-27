@@ -404,14 +404,25 @@ else:
                 correct = output[0]
                 faults = output[1:]
                 # Making it arrays and then converting elements from str to int
-                correct = correct.replace("\n","").split(",")
-                for i, f in enumerate(faults):
-                    faults[i] = f.replace("\n","").split(",")
-                    for j in range(16):
-                        faults[i][j] = int(faults[i][j], 16)
-                for i in range(16):
-                    correct[i] = int(correct[i],16)
-
+                if ',' in correct:
+                    correct = correct.replace("\n","").split(",")
+                    for i in range(16):
+                        correct[i] = int(correct[i],16)
+                    for i, f in enumerate(faults):
+                        faults[i] = f.replace("\n","").split(",")
+                        for j in range(16):
+                            faults[i][j] = int(faults[i][j], 16)
+                else:
+                    print("no comma found (emma)")
+                    correct = correct.replace("\n","")
+                    correct = [(correct[i:i+2]) for i in range (0, len(correct), 2)]
+                    for i in range(16):
+                        correct[i] = int(correct[i],16)
+                    for i, f in enumerate(faults):
+                        aux = f.replace("\n","")
+                        faults[i] = [(aux[i:i+2]) for i in range (0, len(aux), 2)]
+                        for j in range(16):
+                            faults[i][j] = int(faults[i][j], 16)
                 '''
                 print("Output to analyze is:")
                 for c in correct:
